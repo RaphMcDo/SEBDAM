@@ -1,0 +1,5 @@
+library(INLA)
+library(TMB)
+dyn.unload(dynlib("C:/Users/mcdonaldra/Documents/Github/SEBDAM/src/SEBDAM"))
+TMB::compile("C:/Users/mcdonaldra/Documents/Github/SEBDAM/src/SEBDAM.cpp","&> C:/Users/mcdonaldra/Documents/errors.txt")
+dyn.load(dynlib("C:/Users/mcdonaldra/Documents/Github/SEBDAM/src/SEBDAM"))
