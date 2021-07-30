@@ -6,3 +6,5 @@
 .httr-oauth
 .DS_Store
 *.RData
+dev_compile.R
+testing.R
