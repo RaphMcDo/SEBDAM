@@ -28,7 +28,8 @@ Type tlm(objective_function <Type>* obj) {
   DATA_VECTOR(pos_tows_IR); //number of tows with positive catches (dim NY)
 
   //For residuals
-  DATA_VECTOR_INDICATOR(keep, logI);
+  DATA_VECTOR_INDICATOR(keep_I, logI);
+  DATA_VECTOR_INDICATOR(keep_IR, logIR);
 
   //Indices
   DATA_FACTOR(t_i); //index to identify what year to attribute observation
@@ -54,7 +55,7 @@ Type tlm(objective_function <Type>* obj) {
   //----------------------------------------------------------------------------
 
   int NY = pos_tows_I.size(); // number of years
-  int n_i = I.size(); //number of observations
+  int n_i = logI.size(); //number of observations
 
   // Transform input parameters to natural scale
   Type sigma_tau = exp(log_sigma_tau);
@@ -200,9 +201,9 @@ Type tlm(objective_function <Type>* obj) {
 
   //Observation equations for observed survey commercial size biomass
   for (int i = 0; i < n_i; i++){
-    if( !isNA(I(i) )) {
+    if( !isNA(logI(i) )) {
       Type mean_B = q_I*B(t_i(i))/p_I;
-      nll_comp[4] -= keep(i) * dnorm(logI(i), log(mean_B)-sqr(sigma_epsilon)/2.0, sigma_epsilon, true);
+      nll_comp[4] -= keep_I(i) * dnorm(logI(i), log(mean_B)-sqr(sigma_epsilon)/2.0, sigma_epsilon, true);
     }
   }
 
@@ -235,7 +236,7 @@ Type tlm(objective_function <Type>* obj) {
   for (int i = 0; i < n_i; i++){
     if( !isNA(logIR(i) )) {
       Type mean_R = q_R*R(t_i(i))/p_IR;
-      nll_comp[6] -= keep(i) * dnorm(logIR(i), log(mean_R)-sqr(sigma_upsilon)/2.0, sigma_upsilon, true);
+      nll_comp[6] -= keep_IR(i) * dnorm(logIR(i), log(mean_R)-sqr(sigma_upsilon)/2.0, sigma_upsilon, true);
     }
   }
 
@@ -255,13 +256,15 @@ Type tlm(objective_function <Type>* obj) {
     DATA_VECTOR(n_bin); //total number of shells caught in tow (dim n_i)
     DATA_VECTOR(L); //number of clappers in tow (dim n_i)
 
+    DATA_VECTOR_INDICATOR(keep_L, L);
+
     PARAMETER(log_S); // clapper catchability
     Type S = exp(log_S);
 
     // Clappers with replicates with binomial approach
     for (int i = 0; i < n_i; i++){
       if (!isNA(L(i))) {
-        nll_comp[7] -= keep(i) * dbinom(L(i), n_bin(i),m(t_i(i))*S,true);
+        nll_comp[7] -= keep_L(i) * dbinom(L(i), n_bin(i),m(t_i(i))*S,true);
       }
     }
 

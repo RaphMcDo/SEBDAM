@@ -33,13 +33,17 @@ Type sebdam(objective_function <Type>* obj) {
   //2: Barrier model
 
   //Data
-  DATA_VECTOR(I); //commercial biomass survey index by tow (dim n_i)
-  DATA_VECTOR(IR); //recruit survey index by tow (dim n_i)
+  DATA_VECTOR(logI); //commercial biomass survey index by tow (dim n_i)
+  DATA_VECTOR(logIR); //recruit survey index by tow (dim n_i)
   DATA_VECTOR(area); //area covered by each knot (dim n_s)
   DATA_MATRIX(C); //commercial catch (dim n_s,n_t)
   DATA_VECTOR(n_tows); //number of tows in year (dim n_t)
   DATA_VECTOR(pos_tows_I); //number of tows that captured commercial biomass (dim n_t)
   DATA_VECTOR(pos_tows_IR); //number of tows that captured recruits (dim n_t)
+
+  //For residuals
+  DATA_VECTOR_INDICATOR(keep_I, logI);
+  DATA_VECTOR_INDICATOR(keep_IR, logIR);
 
   //Sizes
   DATA_INTEGER(n_i); //Number of observations per year
@@ -155,7 +159,7 @@ Type sebdam(objective_function <Type>* obj) {
       SIMULATE {
         SparseMatrix <Type> Q_B = Q_spde(mesh_obj, kappa_B);
         density::GMRF_t<Type> gmrf1(Q_B);
-        for (int t = 0; t < n_t; t++){
+        for (int t = 0; t < (n_t+1); t++){
           vector <Type> temp_omega(n_m);
           SCALE(gmrf1,1/tau_B).simulate(temp_omega);
           omega_B.col(t)=temp_omega;
@@ -185,7 +189,10 @@ Type sebdam(objective_function <Type>* obj) {
 
       //Create anisotropy matrices
       matrix <Type> H_B(2,2); H_B = create_H(log_H_input_B);
-      matrix <Type> H_R(2,2); H_R = create_H(log_H_input_R);
+      matrix <Type> H_R(2,2);
+      if (options_vec[6] == 1){
+        H_R = create_H(log_H_input_R);
+      } else if (options_vec[6]==0) {H_R = H_B;}
 
       //Set up GMRF for commercial size biomass
       SparseMatrix <Type> Q_B = Q_spde(mesh_obj, kappa_B, H_B);
@@ -211,7 +218,7 @@ Type sebdam(objective_function <Type>* obj) {
       SIMULATE {
         SparseMatrix <Type> Q_B = Q_spde(mesh_obj, kappa_B, H_B);
         density::GMRF_t<Type> gmrf1(Q_B);
-        for (int t = 0; t < n_t; t++){
+        for (int t = 0; t < (n_t+1); t++){
           vector <Type> temp_omega(n_m);
           SCALE(gmrf1,1/tau_B).simulate(temp_omega);
           omega_B.col(t)=temp_omega;
@@ -304,7 +311,7 @@ Type sebdam(objective_function <Type>* obj) {
     SIMULATE {
       SparseMatrix <Type> Q_R = Q_barrier(mesh_obj, range_R, sigma_R);
       density::GMRF_t<Type> gmrf2(Q_R);
-      for (int t = 0; t < (n_t+1); t++){
+      for (int t = 0; t < (n_t); t++){
         vector <Type> temp_omega(n_m);
         gmrf2.simulate(temp_omega);
         omega_R.col(t)=temp_omega;
@@ -488,7 +495,7 @@ Type sebdam(objective_function <Type>* obj) {
       B(s,t) = exp(log_B(s,t));
     }
     //Project 1 year ahead
-    Type mean_pro =(exp(-m(s,n_t))*gI(n_t-1)*(B(s, (n_t - 1)) - C(s,(n_t-1))) + exp(-m(s,n_t))*gR(n_t-1)*R(s,(n_t-1)))*exp(omega_B(v_i(s),n_t));
+    Type mean_pro = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, (n_t - 1)) - C(s,(n_t-1))) + exp(-m(s,n_t))*gR(n_t-1)*R(s,(n_t-1)))*exp(omega_B(v_i(s),n_t));
     log_B(s,n_t) = log(mean_pro);
     B(s,n_t) = exp(log_B(s,n_t));
   }
@@ -705,7 +712,7 @@ Type sebdam(objective_function <Type>* obj) {
   // Observation equations
 
   //Probability of capturing commercial biomass
-  for (int t = 0; t <n_t; t++){
+  for (int t = 0; t < n_t; t++){
     nll_comp[3] -= dbinom_robust(pos_tows_I(t), n_tows(t), logit(p_I),true);
   }
 
@@ -715,6 +722,7 @@ Type sebdam(objective_function <Type>* obj) {
     }
     REPORT(pos_tows_I);
   }
+
 
   //Commercial size observations
   if (options_vec[4] == 0){
@@ -727,9 +735,9 @@ Type sebdam(objective_function <Type>* obj) {
 
     // Commercial Index
     for (int i = 0; i < n_i; i++){
-      if( !isNA(I(i) )) {
+      if( !isNA(logI(i) )) {
         Type mean_B = qI*B(s_i(i),t_i(i))/p_I;
-        nll_comp(4) -= dnorm(log(I(i)), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
+        nll_comp(4) -= keep_I(i) * dnorm(logI(i), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
       }
     }
 
@@ -737,11 +745,11 @@ Type sebdam(objective_function <Type>* obj) {
       for (int i = 0; i < n_i; i++){
         Type mean_I = qI*B(s_i(i),t_i(i))/p_I;
         bern_I(i) = rbinom(Type(1.0),p_I);
-        if (bern_I(i)>0) I(i) = exp(log(mean_I) - (sqr(sigma_epsilon)/2.0) + rnorm(Type(0.0),sigma_epsilon));
-        else I(i) = NA_REAL;
+        if (bern_I(i)>0) logI(i) = log(mean_I) - (sqr(sigma_epsilon)/2.0) + rnorm(Type(0.0),sigma_epsilon);
+        else logI(i) = NA_REAL;
       }
       REPORT(bern_I);
-      REPORT(I);
+      REPORT(logI);
     }
     REPORT(qI);
     ADREPORT(qI);
@@ -756,9 +764,9 @@ Type sebdam(objective_function <Type>* obj) {
 
   // Commercial Index
     for (int i = 0; i < n_i; i++){
-      if( !isNA(I(i) )) {
+      if( !isNA(logI(i) )) {
         Type mean_B = qI(s_i(i))*B(s_i(i),t_i(i))/p_I;
-        nll_comp(4) -= dnorm(log(I(i)), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
+        nll_comp(4) -= keep_I(i) * dnorm(logI(i), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
       }
     }
 
@@ -766,18 +774,18 @@ Type sebdam(objective_function <Type>* obj) {
       for (int i = 0; i < n_i; i++){
         Type mean_I = qI(s_i(i))*B(s_i(i),t_i(i))/p_I;
         bern_I(i) = rbinom(Type(1.0),p_I);
-        if (bern_I(i)>0) I(i) = exp(log(mean_I) - (sqr(sigma_epsilon)/2.0) + rnorm(Type(0.0),sigma_epsilon));
-        else I(i) = NA_REAL;
+        if (bern_I(i)>0) logI(i) = log(mean_I) - (sqr(sigma_epsilon)/2.0) + rnorm(Type(0.0),sigma_epsilon);
+        else logI(i) = NA_REAL;
       }
       REPORT(bern_I);
-      REPORT(I);
+      REPORT(logI);
     }
     REPORT(qI);
     ADREPORT(qI);
   }
 
   //Probability of capturing recruits
-  for (int t = 0; t <n_t; t++){
+  for (int t = 0; t < n_t; t++){
     nll_comp[5] -= dbinom_robust(pos_tows_IR(t), n_tows(t), logit(p_IR),true);
   }
 
@@ -790,9 +798,9 @@ Type sebdam(objective_function <Type>* obj) {
 
   // Recruit Index
   for (int i = 0; i < n_i; i++){
-    if ( !isNA(IR(i) )) {
+    if ( !isNA(logIR(i) )) {
       Type mean_R = qR*R(s_i(i),t_i(i))/p_IR;
-      nll_comp(6) -= dnorm(log(IR(i)), log(mean_R)-sqr(sigma_upsilon)/Type(2.0), sigma_upsilon, true);
+      nll_comp(6) -= keep_IR(i) * dnorm(logIR(i), log(mean_R)-sqr(sigma_upsilon)/Type(2.0), sigma_upsilon, true);
     }
   }
 
@@ -800,11 +808,11 @@ Type sebdam(objective_function <Type>* obj) {
     for (int i = 0; i < n_i; i++){
       Type mean_IR = qR*R(s_i(i),t_i(i))/p_IR;
       bern_IR(i) = rbinom(Type(1.0),p_IR);
-      if(bern_IR(i)>0) IR(i) = exp(log(mean_IR) - (sqr(sigma_upsilon)/2.0) + rnorm(Type(0.0),sigma_upsilon));
-      else IR(i) = NA_REAL;
+      if(bern_IR(i)>0) logIR(i) = log(mean_IR) - (sqr(sigma_upsilon)/2.0) + rnorm(Type(0.0),sigma_upsilon);
+      else logIR(i) = NA_REAL;
     }
     REPORT(bern_IR);
-    REPORT(IR);
+    REPORT(logIR);
   }
 
 
@@ -812,26 +820,28 @@ Type sebdam(objective_function <Type>* obj) {
     DATA_VECTOR(L); //number of clappers (dim n_i)
     DATA_VECTOR(n_bin); //number of shell caught in tow i (dim n_i)
 
+    DATA_VECTOR_INDICATOR(keep_L, L);
+
     PARAMETER(log_S); //clapper catchability
     Type S = exp(log_S);
 
     // Observations to natural mortality
     for (int i = 0; i < n_i; i++){
       if (!isNA(L(i))) {
-        nll_comp(7) -= dbinom_robust(L(i), n_bin(i),logit(m(s_i(i),t_i(i))*S),true);
+        nll_comp(7) -= keep_L(i) * dbinom_robust(L(i), n_bin(i),logit(m(s_i(i),t_i(i))*S),true);
       }
     }
 
-    SIMULATE {
-      n_bin = rpois(Type(100));
-      for (int i = 0; i < n_i; i++){
-        L(i) = rbinom(n_bin(i), m(s_i(i),t_i(i))*S);
-      }
-      REPORT(L);
-      REPORT(n_bin);
+  SIMULATE {
+    n_bin = rpois(Type(100));
+    for (int i = 0; i < n_i; i++){
+      L(i) = rbinom(n_bin(i), m(s_i(i),t_i(i))*S);
     }
-    REPORT(S);
-    ADREPORT(S);
+    REPORT(L);
+    REPORT(n_bin);
+  }
+  REPORT(S);
+  ADREPORT(S);
   }
 
   //Reporting
