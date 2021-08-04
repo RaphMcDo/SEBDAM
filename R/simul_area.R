@@ -15,7 +15,7 @@ simul_area<-function(n_obs=NULL, n_knots=NULL,
                      seed=NULL,
                      ...,
                      x_coord=c(175,225,225,175),
-                     y_coord=c(175,175,225,225),) {
+                     y_coord=c(175,175,225,225)) {
 
 
   #Create modelling area, default is a 100X100km square
