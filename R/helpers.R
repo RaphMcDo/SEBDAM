@@ -31,7 +31,15 @@ find_utm_code <- function(lonlat) {
 
 }
 
-logit<-function(x) log(x/(1-x))
+#' Logit
+#'
+#' @param x Value of which the logit is desired
+#'
+#' @return Logit of x
+#' @export
+#'
+#' @examples
+logit<-function(x) {log(x/(1-x))}
 
 #' Obtain the necessary matrices and parameters to include geometric anisotropy in SEBDAM
 #'

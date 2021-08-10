@@ -14,7 +14,7 @@ simulate_data<-function(simul_obj=NULL,seed=NULL,format="formatted",
 
   #Setup simulation object
   obj <- MakeADFun( data=simul_obj$simul_data, parameters=simul_obj$simul_par,
-                    random=simul_obj$random, map = simul_obj$map )
+                    random=simul_obj$random, map = simul_obj$map , DLL="SEBDAM")
   if (!is.null(seed) & is.numeric(seed)) set.seed(seed)
   simdata <- obj $ simulate(complete=T)
 
@@ -27,19 +27,21 @@ simulate_data<-function(simul_obj=NULL,seed=NULL,format="formatted",
     temp_data$IR[which(is.na(temp_data$IR))]<-0
     if (!is.null(simdata$L)){
       temp_data$L<-simdata$L
-      temp_data$N<-simdata$n_bin-sim_data$L
+      temp_data$N<-simdata$n_bin-simdata$L
     }
-    temp_growths<-data.frame(g=simdata$g,gR=simdata$gR)
     temp_catch<-simdata$C
 
     check_frame<-data.frame(n_tows=simdata$n_tows,pos_tows_I=simdata$pos_tows_I,
                             pos_tows_IR=simdata$pos_tows_IR)
 
     temp_proc<-list()
+    if (simdata$model=="TLM"){
+      temp_growths<-data.frame(g=simdata$g,gR=simdata$gR)
+    } else if (simdata$model=="SEBDAM") {
+      temp_growths<-data.frame(g=simdata$gI,gR=simdata$gR)
 
-    if (simdata$model=="SEBDAM"){
       temp_data$geometry<-sim_obs_loc
-      temp_data<-st_sf(temp_data)
+      temp_data<-sf::st_sf(temp_data)
 
       temp_proc$density_B<-simdata$B
       temp_proc$density_R<-simdata$R
@@ -57,8 +59,8 @@ simulate_data<-function(simul_obj=NULL,seed=NULL,format="formatted",
       temp_proc<-data.frame(B=simdata$B,R=simdata$R,m=simdata$m)
     }
 
-    return_obj<-list(data=temp_data,growths=test_growths,
-                     catch=test_catch,processes=temp_proc)
+    return_obj<-list(data=temp_data,growths=temp_growths,
+                     catch=temp_catch,processes=temp_proc)
 
   }
 

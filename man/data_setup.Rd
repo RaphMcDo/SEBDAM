@@ -17,7 +17,8 @@ data_setup(
   mult_qI = FALSE,
   spat_approach = NULL,
   knot_obj = NULL,
-  knot_area = NULL
+  knot_area = NULL,
+  separate_R_aniso = T
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ data_setup(
 \item{knot_obj}{kmeans: objects that set knot for spatial approach, can be ignored if using TLM, obtained from setup_mesh function}
 
 \item{knot_area}{dataframe: obtained from setup_pred_grid function, used to know area used for each knot in spatial approach, ignore if using TLM}
+
+\item{separate_R_aniso}{boolean: if using SPDE with geometric anisotropy, set to F is want biomass and recruitment to have same anisotropy}
 }
 \value{
 Properly formatted lists for model fitting

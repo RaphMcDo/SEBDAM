@@ -31,6 +31,9 @@ Type sebdam(objective_function <Type>* obj) {
   //0 (default): Standard SPDE approach
   //1: SPDE approach with geometric anisotropy
   //2: Barrier model
+  //Slot 6: Separate anisotropy for recruitment or not
+  //0 (default): same as for biomass
+  //1: separate anisotropy parameters
 
   //Data
   DATA_VECTOR(logI); //commercial biomass survey index by tow (dim n_i)
@@ -97,16 +100,16 @@ Type sebdam(objective_function <Type>* obj) {
   //
 
   //Set up initial states and other elements
-  SIMULATE{
-    n_tows = Type(120);
-    for (int t = 0; t < n_t; t++){
-      gI(t) = 1.1;
-      gR(t) = 1.5;
-    }
-    REPORT(gI);
-    REPORT(gR);
-    REPORT(n_tows);
-  }
+  // SIMULATE{
+  //   n_tows = Type(120);
+  //   for (int t = 0; t < n_t; t++){
+  //     gI(t) = 1.1;
+  //     gR(t) = 1.5;
+  //   }
+  //   REPORT(gI);
+  //   REPORT(gR);
+  //   REPORT(n_tows);
+  // }
 
   //Setup for simulations and derived values
   vector <Type> bern_I(n_i);

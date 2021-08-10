@@ -38,7 +38,7 @@ simulate_SEBDAM_params<-function(simul_data_obj=NULL,
                                  H_input_m=c(-0.5,0.4),
                                  S=0.4) {
 
-  if (is.null(simul_data_obj)) stop("Missing simulated data object, run simulate_data_obj() and use its output for this function")
+  if (is.null(simul_data_obj)) stop("Missing simulated data object, run simulate_obj() and use its output for this function")
 
   if (simul_data_obj$model=="SEBDAM") {
 
@@ -83,7 +83,7 @@ simulate_SEBDAM_params<-function(simul_data_obj=NULL,
     temp_map<-list()
 
     if (simul_data_obj$options_vec[2] == 1) {
-      if(!(length(qI)>1)) stop("Length of qI needs to be the same as number of knots")
+      if(!(length(qI)>1)) stop("Length of qI needs to be the same as number of knots, needs to be specified manually if more than 1")
       temp_par_list$log_qI<-log(qI)
     }
     else if (simul_data_obj$options_vec[2] == 0) temp_par_list$log_qI<-log(qI)
@@ -91,9 +91,9 @@ simulate_SEBDAM_params<-function(simul_data_obj=NULL,
     if (simul_data_obj$options_vec[4] == 1){
       temp_par_list$omega_m<-matrix(rep(0,(simul_data_obj$n_t+1)*simul_data_obj$n_m),ncol=(simul_data_obj$n_t+1))
       if (simul_data_obj$options_vec[6] %in% c(0,1)){
-        temp_par_list$log_kappa_m<-log(sqrt(8)/Range_m)
-        temp_par_list$log_tau_m<-log(1/((sigma_m)*sqrt(4*pi)*exp(truepar$log_kappa_m)))
-        if (simul_data_obj$options_vec[6] == 0) temp_par_list$log_H_input_m<-H_input_m
+        temp_par_list$log_kappa_m<-log(sqrt(8)/range_m)
+        temp_par_list$log_tau_m<-log(1/((sigma_m)*sqrt(4*pi)*exp(temp_par_list$log_kappa_m)))
+        if (simul_data_obj$options_vec[6] == 1) temp_par_list$log_H_input_m<-H_input_m
       } else if (simul_data_obj$options_vec[6] == 2){
         temp_par_list$log_range_m<-c(log(range_m),log(range_m*0.1))
         temp_par_list$log_sigma_m<-log(sigma_m)

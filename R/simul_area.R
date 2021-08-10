@@ -17,20 +17,20 @@ simul_area<-function(n_obs=NULL, n_knots=NULL,
                      x_coord=c(175,225,225,175),
                      y_coord=c(175,175,225,225)) {
 
-
+  if (is.null(n_obs) | is.null(n_knots)) stop("Provide desired number of observation and desired number of knots")
   #Create modelling area, default is a 100X100km square
   xy<-cbind(x_coord,y_coord)
   points_xy<-sf::st_multipoint(xy)
   poly_xy<-sf::st_sf(sf::st_sfc(sf::st_cast(points_xy,"POLYGON")))
   colnames(poly_xy)<-"geometry"
-  st_geometry(poly_xy)<-"geometry"
+  sf::st_geometry(poly_xy)<-"geometry"
 
   #Sample locations, default is random distribution across space
   rand_loc<-sf::st_sample(poly_xy,size=n_obs,...)
 
   #Create knots from these random locations
   if (is.numeric(seed)) set.seed(as.integer(seed)) else warning("No seed set, knot creation not reproducible")
-  knots<-tryCatch(stats::kmeans(sf::st_coordinates(rand_loc),nknot,nstart=25),
+  knots<-tryCatch(stats::kmeans(sf::st_coordinates(rand_loc),n_knots,nstart=25),
                   warning=function(w) stop("kmeans ",w,", try different seed"))
 
   knots.loc<-as.data.frame(knots[[2]])
@@ -38,7 +38,7 @@ simul_area<-function(n_obs=NULL, n_knots=NULL,
   knots.loc<-sf::st_as_sf(knots.loc,coords=c("lon","lat"))
 
   #Create mesh based on the knots
-  if (x_coord==c(175,225,225,175) & y_coord==c(175,175,225,225)){
+  if (all(x_coord==c(175,225,225,175)) & all(y_coord==c(175,175,225,225))){
     mesh<-INLA::inla.mesh.2d(sf::st_coordinates(knots.loc),
                            max.edge=c(8,30),cutoff=2,
                            boundary=INLA::inla.sp2segment(sf::as_Spatial(poly_xy)),
@@ -58,7 +58,7 @@ simul_area<-function(n_obs=NULL, n_knots=NULL,
   centroids<-sf::st_centroid(gridded_bound)
 
   #Get distance between centroids of grid and knots
-  distmat<-sf::st_distance(centroids, knots_sf)
+  distmat<-sf::st_distance(centroids, knots.loc)
   polyknotID<-c()
   for (i in 1:length(distmat[,1])) {
     polyknotID<-c(polyknotID,which(distmat[i,]==min(distmat[i,])))
@@ -67,9 +67,11 @@ simul_area<-function(n_obs=NULL, n_knots=NULL,
   gridded_bound$area<-sf::st_area(gridded_bound)
 
   #Area of each knots
-  stratarea<-stats::aggregate(area~knotID,sum,data=gridded_bound)
+  stratarea<-stats::aggregate(area~knotID,FUN=sum,data=sf::st_drop_geometry(gridded_bound))
 
-  listy<-list(area=poly_xy,knots=knots,mesh=mesh,sim_obs=rand_loc,area=stratarea)
+  listy<-list(area=poly_xy,knots=knots,mesh=mesh,
+              sim_obs=rand_loc,stratarea=stratarea,knots_sf=knots.loc,
+              grid=gridded_bound)
   return(listy)
 
 }
