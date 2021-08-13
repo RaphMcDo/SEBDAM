@@ -22,7 +22,7 @@ fit_model<-function(tmb_obj,optim="nlminb",
   #Create object
   obj<-TMB::MakeADFun(data=tmb_obj$data,parameters=tmb_obj$par,random=tmb_obj$random,map=tmb_obj$map,DLL="SEBDAM")
 
-  if (!(optim %in% c("nlminb","optimr","parallel"))) stop("Incorrect optimizer specification, options: nlminb, optimr")
+  if (!(optim %in% c("nlminb","optimr","parallel"))) stop("Incorrect optimizer specification, options: nlminb, optimr, parallel (last does not work on Windows currently)")
 
   if (optim == "nlminb") {
     Opt<-try(stats::nlminb(start=obj$par,obj=obj$fn,gr=obj$gr,

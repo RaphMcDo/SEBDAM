@@ -11,12 +11,13 @@ get_parameters<-function(return_obj) {
   par_names<-names(return_obj$obj$par)
   par_names<-stringr::str_remove(par_names,"log_")
   par_names<-stringr::str_remove(par_names,"logit_")
+  par_names<-sub("H_input","H",par_names)
 
   pars<-return_obj$sdrep$value[which(names(return_obj$sdrep$value) %in% par_names)]
   pars_se<-return_obj$sdrep$sd[which(names(return_obj$sdrep$value) %in% par_names)]
 
   par_frame<-as.data.frame(cbind(pars,pars_se))
-  colnames(par_frames)<-c("Estimate","SE")
+  colnames(par_frame)<-c("Estimate","SE")
 
   return(par_frame)
 }

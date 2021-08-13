@@ -27,7 +27,7 @@
 #' @examples
 simulate_SEBDAM_params<-function(simul_data_obj=NULL,
                                  sigma_epsilon=0.1,sigma_upsilon=0.1,
-                                 R0=NULL,B0=NULL,m0=0.1, p_I=0.9,
+                                 R0=100,B0=500,m0=0.1, p_I=0.9,
                                  p_IR=0.4,qR=0.2,
                                  range_B=40,range_R=30,
                                  sigma_B=0.1,sigma_R=0.1,
@@ -82,11 +82,13 @@ simulate_SEBDAM_params<-function(simul_data_obj=NULL,
     temp_random<-c("omega_B","omega_R")
     temp_map<-list()
 
-    if (simul_data_obj$options_vec[2] == 1) {
+    if (simul_data_obj$options_vec[5] == 1) {
       if(!(length(qI)>1)) stop("Length of qI needs to be the same as number of knots, needs to be specified manually if more than 1")
       temp_par_list$log_qI<-log(qI)
+    } else if (simul_data_obj$options_vec[5] == 0) {
+      if(length(qI)>1) warning("Length of qI greater than 1 but specified using only 1 qI, only first value taken")
+      temp_par_list$log_qI<-log(qI[1])
     }
-    else if (simul_data_obj$options_vec[2] == 0) temp_par_list$log_qI<-log(qI)
 
     if (simul_data_obj$options_vec[4] == 1){
       temp_par_list$omega_m<-matrix(rep(0,(simul_data_obj$n_t+1)*simul_data_obj$n_m),ncol=(simul_data_obj$n_t+1))
@@ -100,7 +102,7 @@ simulate_SEBDAM_params<-function(simul_data_obj=NULL,
       }
       temp_random[3]<-"omega_m"
       temp_par_list$log_S<-log(S)
-    } else if (obs_mort == FALSE) temp_map<-list(log_m0=as.factor(NA))
+    } else if (simul_data_obj$options_vec[4] == 0) temp_map<-list(log_m0=as.factor(NA))
 
     simul_obj<-list(simul_data=simul_data_obj,simul_par=temp_par_list,random=temp_random,map=temp_map)
 

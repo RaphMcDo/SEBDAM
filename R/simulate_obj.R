@@ -5,13 +5,14 @@
 #' @param obs_mort Boolean: True to simulate clapper observations and processes, false to fix natural mortality
 #' @param n_obs Integer: required for TLM and ignored for SEBDAM (as number is chosen in simulate_area function), choose total number of observations
 #' @param even_spread Boolean: choice to spread observations evenly across years, or randomly split them up
-#' @param fix_m Double: if obs_mort is FALSE, choice of value to fix the natural mortality (default of 0.1)
+#' @param fix_m Double: only matters for TLM, if obs_mort is FALSE, choice of value to fix the natural mortality (default of 0.1)
 #' @param prior_q boolean: TRUE to use a prior distribution on q_I in later fitting processes
 #' @param catch_spread Character: ignored if using TLM, choice of how to simulate catches, choices are prop, aggregated or aggregated_extra
 #' @param simul_area_obj List: ignored if using TLM, object obtained from running simulate_area function for SEBDAM
 #' @param mult_qI boolean: ignored if using TLM, choice of using a single q_I (FALSE) or one per knot (TRUE)
 #' @param spat_approach character: ignored if using TLM, choice of spatial approach, options are spde, spde_aniso and barrier
 #' @param separate_R_aniso boolean: ignored if using TLM or using spde or barrier spatial approaches, choice of having separate anisotropy parameters for R or the same as for B
+#' @param bound sf object: boundaries of modelling only when using barrier model, must includes islands
 #'
 #' @return list: object used for simulations in simulate_data function
 #' @export
@@ -22,7 +23,7 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
                         prior_q=FALSE, catch_spread=NULL,
                         simul_area_obj=NULL,
                         mult_qI=FALSE,spat_approach="spde",
-                        separate_R_aniso=TRUE) {
+                        separate_R_aniso=TRUE,bound=NULL) {
 
   if (!(model %in% c("TLM","SEBDAM"))) stop("Incorrect Model Choice")
 
@@ -45,7 +46,7 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
     temp_data_list$gR<-rep(1,n_years)
 
     temp_div<-length(temp_data_list$logI)/n_years
-    rand_vec<-rand_int_vect(min=round(temp_div)/2,max=round(temp_div)+0.5*round(temp_div),n_grp=n_years,total=length(temp_data_list$logI))
+    rand_vec<-rand_int_vect(min=round(temp_div/2),max=round(temp_div+0.5*temp_div),n_grp=n_years,total=length(temp_data_list$logI))
     if (even_spread==T){
       if (length(temp_data_list$logI)/n_years %% 2 %in% c(0,1)) {
         temp_data_list$n_tows<-rep(length(temp_data_list$logI)/n_years,n_years)
@@ -62,20 +63,19 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
 
     if (even_spread==T) {
       if (length(temp_data_list$logI)/n_years %% 2 %in% c(0,1)){
-        data$t_i<-rep(0:(n_years-1),each=length(temp_data_list$logI)/n_years)
+        temp_data_list$t_i<-rep(0:(n_years-1),each=length(temp_data_list$logI)/n_years)
       } else {
         temp<-rep(0:(n_years-1),each=floor(length(temp_data_list$logI)/n_years))
-        data$t_I<-c(temp,0:(length(temp_data_list$logI)-length(data$t_i)))
+        temp_data_list$t_i<-c(temp,0:(length(temp_data_list$logI)-length(temp_data_list$t_i)))
       }
     } else if (even_spread==F) {
-      data$t_I<-rep(0:(n_years-1),times=rand_vec)
+      temp_data_list$t_i<-rep(0:(n_years-1),times=rand_vec)
     }
 
-    if (obs_mort == FALSE) temp_data_list$set_m<-fix_m
     if (obs_mort == TRUE) {
       temp_data_list$L<-rep(1,length(temp_data_list$logI))
       temp_data_list$n_bin<-rep(1,length(temp_data_list$logI))
-    }
+    } else if (obs_mort == FALSE) temp_data_list$set_m<-fix_m
 
     sim_data<-temp_data_list
 
@@ -87,20 +87,23 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
 
     temp_data_list$model<-"SEBDAM"
 
-    if (!(catch_spread %in% c("prop","aggregated","aggregated_extra"))) warning("No appropriate specification of how to simulate catch, therefore none was simulated")
+    if (is.null(catch_spread)) warning("No appropriate specification of how to simulate catch, therefore none will be simulated")
+    else if (!(catch_spread %in% c("prop","aggregated","aggregated_extra"))) warning("No appropriate specification of how to simulate catch, therefore none will be simulated")
 
     if (!(spat_approach %in% c("spde","spde_aniso","barrier"))) warning("Incorrect specification of spatial approach, spde used")
 
     temp_data_list$options_vec<-c(0,0,0,0,0,0,0)
-    if (catch_spread == "prop") temp_data_list$options_vec[1]<-1
-    else if (catch_spread == "aggregated") temp_data_list$options_vec[1]<-2
-    else if (catch_spread == "aggregated_extra") temp_data_list$options_vec[1]<-3
+    if (!is.null(catch_spread)){
+      if (catch_spread == "prop") temp_data_list$options_vec[1]<-1
+      else if (catch_spread == "aggregated") temp_data_list$options_vec[1]<-2
+      else if (catch_spread == "aggregated_extra") temp_data_list$options_vec[1]<-3
+    }
     if (prior_q == TRUE) temp_data_list$options_vec[2]<-1
     if (obs_mort == TRUE) temp_data_list$options_vec[4]<-1
     if (mult_qI == TRUE) temp_data_list$options_vec[5]<-1
     if (spat_approach == "spde_aniso") {
       temp_data_list$options_vec[6]<-1
-      if (separate_R_aniso==F) temp_data_list$options_vec[7]<-1
+      if (separate_R_aniso==T) temp_data_list$options_vec[7]<-1
     }
     else if (spat_approach == "barrier") temp_data_list$options_vec[6]<-2
 
@@ -111,7 +114,7 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
     temp_data_list$C<-matrix(rep(1,(n_years+1)*length(unique(simul_area_obj$knots$cluster))),ncol=(n_years+1))
 
     temp_div<-length(temp_data_list$logI)/n_years
-    rand_vec<-rand_int_vect(min=round(temp_div)/2,max=round(temp_div)+0.5*round(temp_div),n_grp=n_years,total=length(temp_data_list$logI))
+    rand_vec<-rand_int_vect(min=round(temp_div/2),max=round(temp_div+0.5*temp_div),n_grp=n_years,total=length(temp_data_list$logI))
     if (even_spread==T){
       if (length(temp_data_list$logI)/n_years %% 2 %in% c(0,1)) {
         temp_data_list$n_tows<-rep(length(temp_data_list$logI)/n_years,n_years)
@@ -139,10 +142,10 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
         temp_data_list$t_i<-rep(0:(n_years-1),each=length(temp_data_list$logI)/n_years)
       } else {
         temp<-rep(0:(n_years-1),each=floor(length(temp_data_list$logI)/n_years))
-        temp_data_list$t_I<-c(temp,0:(length(temp_data_list$logI)-length(data$t_i)))
+        temp_data_list$t_i<-c(temp,0:(length(temp_data_list$logI)-length(temp_data_list$t_i)))
       }
     } else if (even_spread==F) {
-      temp_data_list$t_I<-rep(0:(n_years-1),times=rand_vec)
+      temp_data_list$t_i<-rep(0:(n_years-1),times=rand_vec)
     }
 
     temp_data_list$v_i<-simul_area_obj$mesh$idx$loc-1

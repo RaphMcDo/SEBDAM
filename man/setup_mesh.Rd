@@ -10,7 +10,8 @@ setup_mesh(
   nknot = 25,
   model_bound = NULL,
   crs_input = NULL,
-  max.edge = c(5, 30),
+  from_sim = FALSE,
+  max.edge = c(8, 30),
   cutoff = 2,
   ...
 )
@@ -25,6 +26,8 @@ setup_mesh(
 \item{model_bound}{sf object for boundaries of modelling area}
 
 \item{crs_input}{Specify crs that want to model in, but not tested for anything that is not UTM at the moment}
+
+\item{from_sim}{boolean: true if using simulated data, false if using real data}
 
 \item{max.edge}{inla.mesh.2d control}
 

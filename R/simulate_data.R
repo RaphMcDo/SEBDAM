@@ -18,11 +18,13 @@ simulate_data<-function(simul_obj=NULL,seed=NULL,format="formatted",
   if (!is.null(seed) & is.numeric(seed)) set.seed(seed)
   simdata <- obj $ simulate(complete=T)
 
+  if (!(format %in% c("raw","formatted"))) stop("Incorrect format, must be raw or formatted")
+
   if (format == "raw") {
     return_obj<-simdata
   } else if (format == 'formatted') {
     temp_data<-data.frame(I=exp(simdata$logI),IR=exp(simdata$logIR),
-                          Year=simdata$t_i,Knot=simdata$s_i)
+                          Year=simdata$t_i+1,Knot=simdata$s_i)
     temp_data$I[which(is.na(temp_data$I))]<-0
     temp_data$IR[which(is.na(temp_data$IR))]<-0
     if (!is.null(simdata$L)){
@@ -60,7 +62,7 @@ simulate_data<-function(simul_obj=NULL,seed=NULL,format="formatted",
     }
 
     return_obj<-list(data=temp_data,growths=temp_growths,
-                     catch=temp_catch,processes=temp_proc)
+                     catch=as.data.frame(temp_catch),processes=temp_proc)
 
   }
 

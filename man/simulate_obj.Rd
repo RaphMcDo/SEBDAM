@@ -11,12 +11,13 @@ simulate_obj(
   n_obs = NULL,
   even_spread = TRUE,
   fix_m = 0.1,
-  prior_q = NULL,
+  prior_q = FALSE,
   catch_spread = NULL,
   simul_area_obj = NULL,
   mult_qI = FALSE,
   spat_approach = "spde",
-  separate_R_aniso = TRUE
+  separate_R_aniso = TRUE,
+  bound = NULL
 )
 }
 \arguments{
@@ -30,7 +31,7 @@ simulate_obj(
 
 \item{even_spread}{Boolean: choice to spread observations evenly across years, or randomly split them up}
 
-\item{fix_m}{Double: if obs_mort is FALSE, choice of value to fix the natural mortality (default of 0.1)}
+\item{fix_m}{Double: only matters for TLM, if obs_mort is FALSE, choice of value to fix the natural mortality (default of 0.1)}
 
 \item{prior_q}{boolean: TRUE to use a prior distribution on q_I in later fitting processes}
 
@@ -43,6 +44,8 @@ simulate_obj(
 \item{spat_approach}{character: ignored if using TLM, choice of spatial approach, options are spde, spde_aniso and barrier}
 
 \item{separate_R_aniso}{boolean: ignored if using TLM or using spde or barrier spatial approaches, choice of having separate anisotropy parameters for R or the same as for B}
+
+\item{bound}{sf object: boundaries of modelling only when using barrier model, must includes islands}
 }
 \value{
 list: object used for simulations in simulate_data function

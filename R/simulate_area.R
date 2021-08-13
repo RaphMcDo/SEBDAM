@@ -11,13 +11,18 @@
 #' @export
 #'
 #' @examples
-simul_area<-function(n_obs=NULL, n_knots=NULL,
+simulate_area<-function(n_obs=NULL, n_knots=NULL,
                      seed=NULL,
                      ...,
                      x_coord=c(175,225,225,175),
                      y_coord=c(175,175,225,225)) {
 
   if (is.null(n_obs) | is.null(n_knots)) stop("Provide desired number of observation and desired number of knots")
+  if (!is.numeric(n_obs) | !is.numeric(n_knots)) stop("Number of observations and knots need to be numeric values")
+
+  n_obs<-as.integer(n_obs)
+  n_knots<-as.integer(n_knots)
+
   #Create modelling area, default is a 100X100km square
   xy<-cbind(x_coord,y_coord)
   points_xy<-sf::st_multipoint(xy)
@@ -38,20 +43,23 @@ simul_area<-function(n_obs=NULL, n_knots=NULL,
   knots.loc<-sf::st_as_sf(knots.loc,coords=c("lon","lat"))
 
   #Create mesh based on the knots
-  if (all(x_coord==c(175,225,225,175)) & all(y_coord==c(175,175,225,225))){
+  if (suppressWarnings(all(x_coord==c(175,225,225,175)) & all(y_coord==c(175,175,225,225)))){
     mesh<-INLA::inla.mesh.2d(sf::st_coordinates(knots.loc),
                            max.edge=c(8,30),cutoff=2,
                            boundary=INLA::inla.sp2segment(sf::as_Spatial(poly_xy)),
                            ...)
+    cellsize<-1
   } else {
     mesh<-tryCatch(INLA::inla.mesh.2d(sf::st_coordinates(knots.loc),
                              boundary=INLA::inla.sp2segment(sf::as_Spatial(poly_xy)),
                              ...),
     error=function(e) stop(e,"for inla.mesh.2d when not using defaults"))
+    cellsize<-10^(nchar(as.integer(mean(max(x_coord)-min(x_coord))))-3)
   }
 
+
   #Setup a 1x1 grid based on the bounds provided
-  grid<-sf::st_make_grid(poly_xy,cellsize = 1)
+  grid<-sf::st_make_grid(poly_xy,cellsize = cellsize)
   #Cut out the parts that we don't want modelled
   gridded_bound<-sf::st_intersection(poly_xy,grid)
   #Pick out centers of each 1x1 grid cell to attribute them to knots

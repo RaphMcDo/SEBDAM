@@ -211,7 +211,7 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
     if (mult_qI == TRUE) temp_data_list$options_vec[5]<-1
     if (spat_approach == "spde_aniso") {
       temp_data_list$options_vec[6]<-1
-      if (separate_R_aniso==F) temp_data_list$options_vec[7]<-1
+      if (separate_R_aniso==T) temp_data_list$options_vec[7]<-1
     }
     else if (spat_approach == "barrier") temp_data_list$options_vec[6]<-2
 
@@ -328,6 +328,7 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
       temp_data_list$n_bin<-temp_bin
       temp_par_list$log_S<--1
     } else if (obs_mort == FALSE) temp_map<-list(log_m0=as.factor(NA))
+    if (separate_R_aniso==FALSE) temp_map$log_H_input_R<-as.factor(c(NA,NA))
 
     tmb_obj<-list(data=temp_data_list,par=temp_par_list,random=temp_random,map=temp_map)
 

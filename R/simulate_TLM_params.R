@@ -16,7 +16,7 @@
 #' @export
 #'
 #' @examples
-simul_TLM_params<-function(simul_data_obj=NULL, sigma_tau=0.1,
+simulate_TLM_params<-function(simul_data_obj=NULL, sigma_tau=0.1,
                            sigma_phi=0.1, sigma_epsilon=0.1,
                            sigma_upsilon=0.1,q_R=0.2,
                            q_I=0.45,p_I=0.9,p_IR=0.4,
@@ -45,7 +45,7 @@ simul_TLM_params<-function(simul_data_obj=NULL, sigma_tau=0.1,
 
     temp_random<-c("log_B","log_R")
 
-    if (simul_data$options_vec[2]==1){
+    if (simul_data_obj$options_vec[2]==1){
       temp_par_list$log_sigma_m<-log(sigma_m)
       temp_par_list$log_S<-log(S)
       temp_par_list$log_input_m<-rep(log(0.1),length(unique(simul_data_obj$t_i))+1)
