@@ -2,16 +2,17 @@
 #'
 #' @param catch sf object with columns Catch, Year, geometry
 #' @param knots kmeans object obtained from setup_mesh function
-#' @param area area covered by each knot as obtained from setup_pred_grid function
+#' @param area sf object: modelling area, obtained with setup_pred_grid
+#' #' @param stratarea area covered by each knot as obtained from setup_pred_grid function
 #' @param crs_input Desired crs, currently only UTM is accepted
 #'
 #' @return List containing properly formatted catch, either sums per at each knot or density (catch/km^2) at each knot
 #' @export
 #'
 #' @examples
-catch_spread<-function(catch=NULL,knots=NULL,area=NULL,crs_input=NULL) {
+catch_spread<-function(catch=NULL,knots=NULL,area=NULL,stratarea=NULL,crs_input=NULL) {
 
-  if (!("sf" %in% attr(catch,"class")) | !("kmeans" %in% attr(knots,"class")) | colnames(catch)!=c("Catch","Year","geometry")) {
+  if (!("sf" %in% attr(catch,"class")) | !("kmeans" %in% attr(knots,"class")) | !all(colnames(catch) %in% c("Catch","Year","geometry"))) {
     stop("Either catch or knots are wrong formats")
   }
   if (is.na(sf::st_crs(catch))) stop("Catch needs a coordinate reference system")
@@ -46,14 +47,15 @@ catch_spread<-function(catch=NULL,knots=NULL,area=NULL,crs_input=NULL) {
   for (i in min(utm_catch$Year):max(utm_catch$Year)){
     catchtemp <-subset(agcatch,Year==i)
     catchtemp <-catchtemp[,-1]
-    catch_frame<-left_join(catch_frame,catchtemp,by="knotID")
+    catch_frame<-dplyr::left_join(catch_frame,catchtemp,by="knotID")
   }
-  colnames(catch_frame)<-c("knotID",paste(1998:2019))
+  colnames(catch_frame)<-c("knotID",paste(1:max(utm_catch$Year)))
   #Change empty entries to 0, cause 0 catches there that year
   catch_frame[is.na(catch_frame)]<-0
 
   sum_catches<-catch_frame
-  density_catches<-catch_frame/area$area
+  density_catches<-catch_frame/stratarea$area
+  density_catches[,1]<-density_catches[,1]/stratarea$area
 
   listy<-list(sum_catches=sum_catches,density_catches=density_catches)
   return(listy)

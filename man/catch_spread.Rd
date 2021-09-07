@@ -4,14 +4,21 @@
 \alias{catch_spread}
 \title{Spread raw catch data to appropriate knots}
 \usage{
-catch_spread(catch = NULL, knots = NULL, area = NULL, crs_input = NULL)
+catch_spread(
+  catch = NULL,
+  knots = NULL,
+  area = NULL,
+  stratarea = NULL,
+  crs_input = NULL
+)
 }
 \arguments{
 \item{catch}{sf object with columns Catch, Year, geometry}
 
 \item{knots}{kmeans object obtained from setup_mesh function}
 
-\item{area}{area covered by each knot as obtained from setup_pred_grid function}
+\item{area}{sf object: modelling area, obtained with setup_pred_grid
+#' @param stratarea area covered by each knot as obtained from setup_pred_grid function}
 
 \item{crs_input}{Desired crs, currently only UTM is accepted}
 }

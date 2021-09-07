@@ -8,6 +8,7 @@
 #' @param bound sf object: used to get triangles for barrier model, if not barrier model leave null
 #' @param obs_mort boolean: true if using observations of mortality (e.g. clappers), false if fixing mortality
 #' @param prior boolean: true if using a prior distribution to inform q_I, false to freely estimate
+#' @param prior_pars numeric: parameters for beta distribution used as a prior, default set to 10 and 12
 #' @param fix_m double: value used for fixing mortality when not using any observations, ignore if using observations
 #' @param mult_qI boolean: if not using spatial approach, ignore, if using spatial: true when using a separate catchability at each knot, false for using a single overall catchability
 #' @param spat_approach character: if using TLM, ignore, if using SEBDAM, choice of spatial model: "spde" for normal SPDE, "spde_aniso" for SPDE approach with geometric anisotropy, and "barrier" for barrier model
@@ -20,7 +21,7 @@
 #'
 #' @examples
 data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL, bound=NULL,
-                     obs_mort=FALSE, prior=FALSE, fix_m=0.1,
+                     obs_mort=FALSE, prior=FALSE, prior_pars=c(10,12), fix_m=0.1,
                      mult_qI=FALSE, spat_approach=NULL, knot_obj=NULL,
                      knot_area=NULL,separate_R_aniso=T) {
 
@@ -66,7 +67,10 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
     temp_data_list$model<-"TLM"
 
     temp_data_list$options_vec<-c(0,0)
-    if (prior == TRUE) temp_data_list$options_vec[1]<-1
+    if (prior == TRUE) {
+      temp_data_list$options_vec[1]<-1
+      temp_data_list$prior_pars<-prior_pars
+    }
     if (obs_mort == TRUE) temp_data_list$options_vec[2]<-1
 
     #For adult/commercial size animals, can be directly used
@@ -206,7 +210,10 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
     temp_data_list$model<-"SEBDAM"
 
     temp_data_list$options_vec<-c(0,0,0,0,0,0,0)
-    if (prior == TRUE) temp_data_list$options_vec[2]<-1
+    if (prior == TRUE) {
+      temp_data_list$options_vec[2]<-1
+      temp_data_list$prior_pars<-prior_pars
+    }
     if (obs_mort == TRUE) temp_data_list$options_vec[4]<-1
     if (mult_qI == TRUE) temp_data_list$options_vec[5]<-1
     if (spat_approach == "spde_aniso") {

@@ -67,8 +67,8 @@ Type tlm(objective_function <Type>* obj) {
   Type p_I = invlogit(logit_p_I);
   Type p_IR = invlogit(logit_p_IR);
 
-  vector<Type> B = exp(log_B);
-  vector<Type> R = exp(log_R);
+  vector <Type> B = exp(log_B);
+  vector <Type> R = exp(log_R);
   vector <Type> m(NY+1); m.setZero();
   vector <Type> log_m(NY+1); log_m.setZero();
 
@@ -76,23 +76,19 @@ Type tlm(objective_function <Type>* obj) {
   nll_comp.setZero(); // initialize
 
   // For simulating empty tows in data vectors I and IR
-  vector<Type> bern_I(n_i);
-  vector<Type> bern_IR(n_i);
+  vector <Type> bern_I(n_i);
+  vector <Type> bern_IR(n_i);
+  vector <Type> sum_tows(NY); sum_tows.setZero();
 
   //Simulate initial states and other datatypes
   SIMULATE{
-    B(0) = Type(1000);
-    log_B(0) = log(B(0));
-    C(0) = B(0)/10.0;
-    R(0) = Type(100);
-    log_R(0) = log(R(0));
-    for (int t = 0; t < NY; t++){
-      g(t) = 1.0;
-      gR(t) = 1.5;
-      n_tows(t) = Type(100);
+    for (int i = 0; i < n_i; i++){
+      sum_tows(t_i(i)) = sum_tows(t_i(i)) + 1;
     }
-    REPORT(g);
-    REPORT(gR);
+
+    for (int t = 0; t < NY; t++){
+      n_tows(t) = sum_tows(t);
+    }
     REPORT(n_tows);
   }
 
@@ -108,6 +104,8 @@ Type tlm(objective_function <Type>* obj) {
 
   //Simulate recruitment
   SIMULATE {
+    R(0) = Type(100);
+    log_R(0) = log(R(0));
     for (int t=1; t<(NY+1); t++){
       Type mean_R =  R[t-1];
       R(t) = exp(log(mean_R)-(sqr(sigma_phi)/2) + rnorm(Type(0.0), sigma_phi));
@@ -122,8 +120,10 @@ Type tlm(objective_function <Type>* obj) {
     DATA_SCALAR(set_m);
     for (int t=0; t<(NY+1);t++){
       m(t) = set_m;
+      log_m(t) = log(m(t));
     }
     REPORT(m);
+    REPORT(log_m);
 
   } else if (options_vec[1] == 1){
     PARAMETER(log_sigma_m); // proc sd nat mort
@@ -149,6 +149,7 @@ Type tlm(objective_function <Type>* obj) {
         log_m(t) = log(m(t));
       }
       input_m = m;
+      log_input_m = log(input_m);
       REPORT(log_m);
       REPORT(m);
       REPORT(input_m);
@@ -168,11 +169,14 @@ Type tlm(objective_function <Type>* obj) {
 
   //Simulate Biomass and Commercial landings
   SIMULATE {
+    B(0) = Type(1000);
+    log_B(0) = log(B(0));
+    C(0) = exp(log(B(0)/Type(10.0))+rnorm(Type(0.0),Type(0.2)));
     for (int t = 1; t < (NY+1); t++){
-      Type mean_proc_B = exp(-m[t])*g[t-1]*(B[t-1]-C[t-1])+exp(-m[t])*gR[t-1]*R[t-1];
+      Type mean_proc_B = (exp(-m[t])*g[t-1]*(B[t-1]-C[t-1])+exp(-m[t])*gR[t-1]*R[t-1]);
       B(t) = exp(log(mean_proc_B) - (sqr(sigma_tau)/2) + rnorm(Type(0.0),sigma_tau));
       log_B(t) = log(B(t));
-      C(t) = B(t)/Type(10.0) ;
+      C(t) = exp(log(B(t)/Type(10.0))+rnorm(Type(0.0),Type(0.2))) ;
     }
     REPORT(log_B);
     REPORT(B);
@@ -197,7 +201,10 @@ Type tlm(objective_function <Type>* obj) {
   }
 
   //If prior on q
-  if (options_vec[0] == 1) {nll_comp[4] -= dbeta(q_I,Type(10),Type(12),true);}
+  if (options_vec[0] == 1) {
+    DATA_VECTOR(prior_pars);
+    nll_comp[4] -= dbeta(q_I,prior_pars[0],prior_pars[1],true);
+    }
 
   //Observation equations for observed survey commercial size biomass
   for (int i = 0; i < n_i; i++){

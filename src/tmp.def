@@ -33,6 +33,7 @@ EXPORTS
  "_Z3expIN5CppAD2ADINS1_IdEEEEEN8tmbutils6vectorIT_EERKS7_"
  "_Z3expIN5CppAD2ADIdEEEN8tmbutils6vectorIT_EERKS6_"
  "_Z3expIdEN8tmbutils6vectorIT_EERKS3_"
+ "_Z3logIdEN8tmbutils6vectorIT_EERKS3_"
  "_Z3tlmIN5CppAD2ADINS1_INS1_IdEEEEEEET_P18objective_functionIS5_E"
  "_Z3tlmIN5CppAD2ADINS1_IdEEEEET_P18objective_functionIS4_E"
  "_Z3tlmIN5CppAD2ADIdEEET_P18objective_functionIS3_E"

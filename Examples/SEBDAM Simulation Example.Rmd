@@ -1,0 +1,90 @@
+---
+title: "SEBDAM Simulation Example"
+author: "Raphaël McDonald"
+date: "9/2/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Simulation Example
+
+This document aims to show a step by step example of how to run a simulation experiment using SEBDAM, including all the decisions that are required to do this.
+
+## Step 1: Simulate Area
+
+The first step is to choose the area that is desired for the modelling exercise, which is done using the function simulate_area(). This function takes 2 mandatory arguments: 
+
+- n_obs: The number of observations desired
+- n_knots: The number of knots desired for the modelling process.
+
+The other optional arguments are the following:
+
+- seed: Setting the seed to be able to reproduce the knot locations
+- x_coords and y_coords: Coordinates used to create the simulation area (only allows single continuous polygon, so cannot be used for simulating barrier models)
+- area: sf object, present if users want to create more complex objects than allowed by x_coords and y_coords
+
+If x_coords and y_coords are not specified and area is not specified, the function defaults to creating a 50X50km square as the modelling area, as was done for the simulation study in McDonald et al. (Submitted). If specifying the coordinates in order to create a different polygon, it must be a single continuous polygon. For more complex areas, they must be created outside of SEBDAM and input into simulate_area() with the area parameter. No matter what area is simulated, its units must be in kilometer for the model to make sense. Furthermore, if not using the default, the user is required to provide extra parameters to create the mesh (e.g. max.edge, cutoff, max.n, etc.) The following R code shows the default, alongside other commented out approaches if using either different coordinates or a user-provided modelling area:
+
+```{r simulate-area-default}
+areasim<-simulate_area(n_obs=1000,n_knots=20,seed=20)
+#areasim<-simulate_area(n_obs=1000,n_knots=20,seed=20,x_coord=c(175,175,225,250,225),y_coord=c(175,225,225,225,175),max.edge=c(8,30),cutoff=2)
+#areasim<-simulate_area(n_obs=1000,n_knots=20,seed=20,area=your_sf_area,max.edge=c(10,25),cutoff=1)
+```
+
+We can now examine everything that comes out of this function, all of which are required for the next functions in approaching simulations: 
+
+- area: sf polygon representing the modelling area
+```{r plot-area}
+plot(areasim$area)
+```
+
+- knots: kmeans object from which the knot locations are obtained for closer examination if the user desires it
+
+- mesh: INLA mesh created based on the knots created previously.
+
+- sim_obs: sf points for the locations of all the simulated data points
+
+```{r plot-mesh-obs}
+plot(areasim$mesh)
+plot(areasim$sim_obs,add=T)
+```
+
+- stratarea: area covered by each knot
+
+- knots_sf: sf points for the locations of the knots
+
+```{r plot-mesh-knots}
+plot(areasim$mesh)
+plot(areasim$knots_sf,add=T)
+```
+
+- grid: grid used for predictions and for plotting purposes
+
+```{r plot-grid}
+plot(areasim$grid)
+```
+
+## Step 2: Simulation Object
+
+The second step is to create the object that is given to TMB to allow it to simulate data and random effects. Many of the modelling decisions are made at this stage through the parameters that the function simulate_obj() requires. These parameters are not all required for SEBDAM (but would be for TLM), and these will be ignored here.
+
+- model: Choose between SEBDAM or TLM model
+
+- n_years: The number of years in which to split the total observations simulated in the first step (simulate_area()).
+
+- obs_mort: TRUE ff we want to simulate observations of natural mortality as is possible in scallop fisheries with clappers, FALSE otherwise (and by default).
+
+- even_spread: TRUE to split the total number of observations evenly in each year, FALSE to introduce some variability in the number of observations per year
+
+- fix_m: only required if obs_mort is FALSE, and is the value at which we want to fix the natural mortality
+
+- catch_spread: choice of simulation approach for landings. If left NULL, no catch is simulated, other choices are proportional (prop), aggregated into knots with higher than average biomass (aggregated), or aggregated the same way with low levels of landings in all knots below average (aggregated_extra).
+
+- simul_area_obj: object simulated in step 1 with simulate_area()
+
+- 
+
+

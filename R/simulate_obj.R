@@ -34,13 +34,16 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
     temp_data_list$model<-"TLM"
 
     temp_data_list$options_vec<-c(0,0)
-    if (prior_q == TRUE) temp_data_list$options_vec[1]<-1
+    if (prior_q == TRUE) {
+      temp_data_list$options_vec[1]<-1
+      temp_data_list$prior_pars<-c(10,12)
+    }
     if (obs_mort == TRUE) temp_data_list$options_vec[2]<-1
 
     temp_data_list$logI<-rep(1,n_obs)
     temp_data_list$logIR<-rep(1,n_obs)
 
-    temp_data_list$C<-rep(1,n_years)
+    temp_data_list$C<-rep(1,n_years+1)
 
     temp_data_list$g<-rep(1,n_years)
     temp_data_list$gR<-rep(1,n_years)
@@ -98,7 +101,10 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
       else if (catch_spread == "aggregated") temp_data_list$options_vec[1]<-2
       else if (catch_spread == "aggregated_extra") temp_data_list$options_vec[1]<-3
     }
-    if (prior_q == TRUE) temp_data_list$options_vec[2]<-1
+    if (prior_q == TRUE) {
+      temp_data_list$options_vec[2]<-1
+      temp_data_list$prior_pars<-c(10,12)
+    }
     if (obs_mort == TRUE) temp_data_list$options_vec[4]<-1
     if (mult_qI == TRUE) temp_data_list$options_vec[5]<-1
     if (spat_approach == "spde_aniso") {
@@ -151,7 +157,7 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
     temp_data_list$v_i<-simul_area_obj$mesh$idx$loc-1
 
     temp_data_list$gI<-rep(1.1,n_years)
-    temp_data_list$gR<-rep(1.1,n_years)
+    temp_data_list$gR<-rep(1.5,n_years)
 
     if (spat_approach %in% c("spde","spde_aniso")){
       if (spat_approach == "spde") temp_data_list$mesh_obj<-(INLA::inla.spde2.matern(simul_area_obj$mesh))$param.inla[c("M0","M1","M2")]

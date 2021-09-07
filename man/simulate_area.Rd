@@ -10,7 +10,8 @@ simulate_area(
   seed = NULL,
   ...,
   x_coord = c(175, 225, 225, 175),
-  y_coord = c(175, 175, 225, 225)
+  y_coord = c(175, 175, 225, 225),
+  area = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ simulate_area(
 \item{x_coord}{x coordinates for creation of simulation area}
 
 \item{y_coord}{y coordinates for creation of simulation area}
+
+\item{area}{sf object: modelling area desired for simulation purposes}
 }
 \value{
 list containing sf object for simulation area, kmeans object for knots, inla mesh, and sfc object with location of every simulated points

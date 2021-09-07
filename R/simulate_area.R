@@ -6,6 +6,7 @@
 #' @param ... Given to sf::st_sample for different types of random samplings, and to INLA::inla.mesh.2d for additional parameters, especially if not using defaults
 #' @param x_coord x coordinates for creation of simulation area
 #' @param y_coord y coordinates for creation of simulation area
+#' @param area sf object: modelling area desired for simulation purposes
 #'
 #' @return list containing sf object for simulation area, kmeans object for knots, inla mesh, and sfc object with location of every simulated points
 #' @export
@@ -15,20 +16,24 @@ simulate_area<-function(n_obs=NULL, n_knots=NULL,
                      seed=NULL,
                      ...,
                      x_coord=c(175,225,225,175),
-                     y_coord=c(175,175,225,225)) {
+                     y_coord=c(175,175,225,225),
+                     area=NULL) {
 
   if (is.null(n_obs) | is.null(n_knots)) stop("Provide desired number of observation and desired number of knots")
   if (!is.numeric(n_obs) | !is.numeric(n_knots)) stop("Number of observations and knots need to be numeric values")
+  if (!is.null(area) & !("sf" %in% attr(area,"class"))) stop("If specifying area, it needs to be an sf object")
 
   n_obs<-as.integer(n_obs)
   n_knots<-as.integer(n_knots)
 
   #Create modelling area, default is a 100X100km square
-  xy<-cbind(x_coord,y_coord)
-  points_xy<-sf::st_multipoint(xy)
-  poly_xy<-sf::st_sf(sf::st_sfc(sf::st_cast(points_xy,"POLYGON")))
-  colnames(poly_xy)<-"geometry"
-  sf::st_geometry(poly_xy)<-"geometry"
+  if (is.null(area)) {
+    xy<-cbind(x_coord,y_coord)
+    points_xy<-sf::st_multipoint(xy)
+    poly_xy<-sf::st_sf(sf::st_sfc(sf::st_cast(points_xy,"POLYGON")))
+    colnames(poly_xy)<-"geometry"
+    sf::st_geometry(poly_xy)<-"geometry"}
+  else if (!is.null(area)){poly_xy<-area}
 
   #Sample locations, default is random distribution across space
   rand_loc<-sf::st_sample(poly_xy,size=n_obs,...)

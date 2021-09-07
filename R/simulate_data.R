@@ -24,7 +24,10 @@ simulate_data<-function(simul_obj=NULL,seed=NULL,format="formatted",
     return_obj<-simdata
   } else if (format == 'formatted') {
     temp_data<-data.frame(I=exp(simdata$logI),IR=exp(simdata$logIR),
-                          Year=simdata$t_i+1,Knot=simdata$s_i)
+                          Year=simdata$t_i+1)
+    if (simdata$model=="SEBDAM"){
+      temp_data$Knot=simdata$s_i
+    }
     temp_data$I[which(is.na(temp_data$I))]<-0
     temp_data$IR[which(is.na(temp_data$IR))]<-0
     if (!is.null(simdata$L)){
@@ -39,6 +42,7 @@ simulate_data<-function(simul_obj=NULL,seed=NULL,format="formatted",
     temp_proc<-list()
     if (simdata$model=="TLM"){
       temp_growths<-data.frame(g=simdata$g,gR=simdata$gR)
+      temp_proc<-data.frame(B=simdata$B,R=simdata$R,m=simdata$m)
     } else if (simdata$model=="SEBDAM") {
       temp_growths<-data.frame(g=simdata$gI,gR=simdata$gR)
 
@@ -57,12 +61,16 @@ simulate_data<-function(simul_obj=NULL,seed=NULL,format="formatted",
         temp_proc$omega_m<-simdata$omega_m
       }
 
-    } else if (simdata$model=="TLM") {
-      temp_proc<-data.frame(B=simdata$B,R=simdata$R,m=simdata$m)
     }
 
     return_obj<-list(data=temp_data,growths=temp_growths,
-                     catch=as.data.frame(temp_catch),processes=temp_proc)
+                     processes=temp_proc)
+
+    if (simdata$model=="SEBDAM"){
+      return_obj$catch=as.data.frame(temp_catch)
+    } else if (simdata$model=="TLM"){
+      return_obj$catch=as.vector(temp_catch)
+    }
 
   }
 

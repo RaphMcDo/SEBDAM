@@ -11,15 +11,14 @@ get_processes<-function(return_obj) {
   if (return_obj$obj$env$data$model == "TLM"){
 
     B<-return_obj$report$B
-    se_B<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$sd)=="B")])
+    se_B<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="B")])
 
     R<-return_obj$report$R
-    R<-c(R,rep(NA,return_obj$obj$env$data$n_s))
-    se_R<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$sd)=="R")])
-    se_R<-c(se_R,rep(NA,report_obj$obj$env$data$n_s))
+    se_R<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="R")])
 
     m<-return_obj$report$m
-    se_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$sd)=="m")])
+    if (return_obj$obj$env$data$options_vec[2]==1) se_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="m")])
+    else se_m<-rep(NA,length(m))
 
     proc_frame<-data.frame(B=B,se_B=se_B,R=R,se_R=se_R,m=m,se_m=se_m)
 

@@ -99,18 +99,6 @@ Type sebdam(objective_function <Type>* obj) {
   matrix <Type> m(n_s,(n_t+1));
   //
 
-  //Set up initial states and other elements
-  // SIMULATE{
-  //   n_tows = Type(120);
-  //   for (int t = 0; t < n_t; t++){
-  //     gI(t) = 1.1;
-  //     gR(t) = 1.5;
-  //   }
-  //   REPORT(gI);
-  //   REPORT(gR);
-  //   REPORT(n_tows);
-  // }
-
   //Setup for simulations and derived values
   vector <Type> bern_I(n_i);
   vector <Type> bern_IR(n_i);
@@ -733,7 +721,8 @@ Type sebdam(objective_function <Type>* obj) {
     Type qI = exp(log_qI);
 
     if (options_vec[1] == 1){
-      nll_comp[8] -= dbeta(qI,Type(10.0),Type(12.0),true);
+      DATA_VECTOR(prior_pars);
+      nll_comp[8] -= dbeta(qI,prior_pars[0],prior_pars[1],true);
     }
 
     // Commercial Index
@@ -760,8 +749,9 @@ Type sebdam(objective_function <Type>* obj) {
     PARAMETER_VECTOR(log_qI); //commercial biomass catchabilities
     vector <Type> qI(n_s); qI = exp(log_qI);
     if (options_vec[1] == 1){
+      DATA_VECTOR(prior_pars);
       for (int s = 0; s < n_s; s++){
-        nll_comp[8] -= dbeta(qI(s),Type(10.0),Type(12.0),true);
+        nll_comp[8] -= dbeta(qI(s),prior_pars[0],prior_pars[1],true);
       }
     }
 

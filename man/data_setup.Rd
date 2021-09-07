@@ -13,6 +13,7 @@ data_setup(
   bound = NULL,
   obs_mort = FALSE,
   prior = FALSE,
+  prior_pars = c(10, 12),
   fix_m = 0.1,
   mult_qI = FALSE,
   spat_approach = NULL,
@@ -37,6 +38,8 @@ data_setup(
 \item{obs_mort}{boolean: true if using observations of mortality (e.g. clappers), false if fixing mortality}
 
 \item{prior}{boolean: true if using a prior distribution to inform q_I, false to freely estimate}
+
+\item{prior_pars}{numeric: parameters for beta distribution used as a prior, default set to 10 and 12}
 
 \item{fix_m}{double: value used for fixing mortality when not using any observations, ignore if using observations}
 
