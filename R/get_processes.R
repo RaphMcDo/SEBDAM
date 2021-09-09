@@ -26,7 +26,7 @@ get_processes<-function(return_obj) {
 
   } else if (return_obj$obj$env$data$model == "SEBDAM"){
 
-    if (return_obj$obj$env$data$options_vec[3]!=1) warning("Standard errors for processes were not calculated as part of fitting process, if desired please rerun with options_vec[3]==1")
+    if (return_obj$obj$env$data$options_vec[3]!=1) warning("Standard errors for processes were not calculated as part of fitting process, if desired please rerun data_setup() with all_se=T")
 
     #Obtaining density processes
     B<-return_obj$report$B

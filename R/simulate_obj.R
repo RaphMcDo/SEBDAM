@@ -6,6 +6,8 @@
 #' @param n_obs Integer: required for TLM and ignored for SEBDAM (as number is chosen in simulate_area function), choose total number of observations
 #' @param even_spread Boolean: choice to spread observations evenly across years, or randomly split them up
 #' @param fix_m Double: only matters for TLM, if obs_mort is FALSE, choice of value to fix the natural mortality (default of 0.1)
+#' @param gI double: desired commercial size growth rates, defaults to 1.1 if unspecified
+#' @param gR double: desired recruit size growth rates, defaults to 1.1 if unspecified
 #' @param prior_q boolean: TRUE to use a prior distribution on q_I in later fitting processes
 #' @param catch_spread Character: ignored if using TLM, choice of how to simulate catches, choices are prop, aggregated or aggregated_extra
 #' @param simul_area_obj List: ignored if using TLM, object obtained from running simulate_area function for SEBDAM
@@ -20,6 +22,7 @@
 #' @examples
 simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
                         n_obs=NULL,even_spread=TRUE, fix_m=0.1,
+                        gI=rep(1.1,n_years),gR=rep(1.5,n_years),
                         prior_q=FALSE, catch_spread=NULL,
                         simul_area_obj=NULL,
                         mult_qI=FALSE,spat_approach="spde",
@@ -45,8 +48,8 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
 
     temp_data_list$C<-rep(1,n_years+1)
 
-    temp_data_list$g<-rep(1,n_years)
-    temp_data_list$gR<-rep(1,n_years)
+    temp_data_list$g<-gI
+    temp_data_list$gR<-gR
 
     temp_div<-length(temp_data_list$logI)/n_years
     rand_vec<-rand_int_vect(min=round(temp_div/2),max=round(temp_div+0.5*temp_div),n_grp=n_years,total=length(temp_data_list$logI))
@@ -156,8 +159,8 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
 
     temp_data_list$v_i<-simul_area_obj$mesh$idx$loc-1
 
-    temp_data_list$gI<-rep(1.1,n_years)
-    temp_data_list$gR<-rep(1.5,n_years)
+    temp_data_list$gI<-gI
+    temp_data_list$gR<-gR
 
     if (spat_approach %in% c("spde","spde_aniso")){
       if (spat_approach == "spde") temp_data_list$mesh_obj<-(INLA::inla.spde2.matern(simul_area_obj$mesh))$param.inla[c("M0","M1","M2")]

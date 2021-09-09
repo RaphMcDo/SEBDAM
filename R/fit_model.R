@@ -6,21 +6,23 @@
 #' @param optim_method if using optimr, choice of optimization method
 #' @param cores detects cores for parallel optimization unless otherwise specified
 #' @param bias.correct for TMB::sdreport, if want to apply bias correction
+#' @param silent for TMB::MakeADFun and
 #'
 #' @return Object containing modelling output
 #' @export
 #'
 #' @examples
-fit_model<-function(tmb_obj,optim="nlminb",
-                    control=NULL,optim_method=NULL,
+fit_model<-function(tmb_obj,optim="optimr",
+                    control=NULL,optim_method="nlminb",
                     cores=parallel::detectCores(),
-                    bias.correct=F) {
+                    bias.correct=F,
+                    silent=T) {
   if (length(tmb_obj$data$options_vec)>2){
-    if (tmb_obj$data$options_vec[3]!=1) warning("Standard Errors for random fields and densities (B, R, and m) will not be calculated")
+    if (tmb_obj$data$options_vec[3]!=1) warning("Standard Errors for random fields and densities (B, R, and m) will not be calculated, if desired rerun data_setup() with all_se=T")
   }
 
   #Create object
-  obj<-TMB::MakeADFun(data=tmb_obj$data,parameters=tmb_obj$par,random=tmb_obj$random,map=tmb_obj$map,DLL="SEBDAM")
+  obj<-TMB::MakeADFun(data=tmb_obj$data,parameters=tmb_obj$par,random=tmb_obj$random,map=tmb_obj$map,DLL="SEBDAM",silent=silent)
 
   if (!(optim %in% c("nlminb","optimr","parallel"))) stop("Incorrect optimizer specification, options: nlminb, optimr, parallel (last does not work on Windows currently)")
 

@@ -11,6 +11,8 @@ simulate_obj(
   n_obs = NULL,
   even_spread = TRUE,
   fix_m = 0.1,
+  gI = rep(1.1, n_years),
+  gR = rep(1.5, n_years),
   prior_q = FALSE,
   catch_spread = NULL,
   simul_area_obj = NULL,
@@ -32,6 +34,10 @@ simulate_obj(
 \item{even_spread}{Boolean: choice to spread observations evenly across years, or randomly split them up}
 
 \item{fix_m}{Double: only matters for TLM, if obs_mort is FALSE, choice of value to fix the natural mortality (default of 0.1)}
+
+\item{gI}{double: desired commercial size growth rates, defaults to 1.1 if unspecified}
+
+\item{gR}{double: desired recruit size growth rates, defaults to 1.1 if unspecified}
 
 \item{prior_q}{boolean: TRUE to use a prior distribution on q_I in later fitting processes}
 

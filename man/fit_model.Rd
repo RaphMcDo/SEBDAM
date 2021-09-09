@@ -6,11 +6,12 @@
 \usage{
 fit_model(
   tmb_obj,
-  optim = "nlminb",
+  optim = "optimr",
   control = NULL,
-  optim_method = NULL,
+  optim_method = "nlminb",
   cores = parallel::detectCores(),
-  bias.correct = F
+  bias.correct = F,
+  silent = T
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ fit_model(
 \item{cores}{detects cores for parallel optimization unless otherwise specified}
 
 \item{bias.correct}{for TMB::sdreport, if want to apply bias correction}
+
+\item{silent}{for TMB::MakeADFun and}
 }
 \value{
 Object containing modelling output

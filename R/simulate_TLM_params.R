@@ -5,8 +5,8 @@
 #' @param sigma_phi double: recruitment process variance parameter
 #' @param sigma_epsilon double: biomass observation variance parameter
 #' @param sigma_upsilon double: recruitment observation variance parameter
-#' @param q_R double: recruitment catchability
 #' @param q_I double: biomass catchability
+#' @param q_R double: recruitment catchability
 #' @param p_I double: probability of biomass capture
 #' @param p_IR double: probability of recruit capture
 #' @param sigma_m double: natural mortality process variance parameter
@@ -35,8 +35,8 @@ simulate_TLM_params<-function(simul_data_obj=NULL, sigma_tau=0.1,
     temp_par_list$log_sigma_phi<-log(sigma_phi)
     temp_par_list$log_sigma_epsilon<-log(sigma_epsilon)
     temp_par_list$log_sigma_upsilon<-log(sigma_upsilon)
-    temp_par_list$log_q_R<-log(q_R)
     temp_par_list$log_q_I<-log(q_I)
+    temp_par_list$log_q_R<-log(q_R)
     temp_par_list$logit_p_I<-logit(p_I)
     temp_par_list$logit_p_IR<-logit(p_IR)
 

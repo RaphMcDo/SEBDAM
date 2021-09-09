@@ -15,6 +15,7 @@
 #' @param knot_obj kmeans: objects that set knot for spatial approach, can be ignored if using TLM, obtained from setup_mesh function
 #' @param knot_area dataframe: obtained from setup_pred_grid function, used to know area used for each knot in spatial approach, ignore if using TLM
 #' @param separate_R_aniso boolean: if using SPDE with geometric anisotropy, set to F is want biomass and recruitment to have same anisotropy
+#' @param all_se boolean: if using SEBDAM, FALSE to speed up fitting process but not get all standard errors for random effects, TRUE to get all standard errors for random effects but slow down fitting process
 #'
 #' @return Properly formatted lists for model fitting
 #' @export
@@ -23,7 +24,7 @@
 data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL, bound=NULL,
                      obs_mort=FALSE, prior=FALSE, prior_pars=c(10,12), fix_m=0.1,
                      mult_qI=FALSE, spat_approach=NULL, knot_obj=NULL,
-                     knot_area=NULL,separate_R_aniso=T) {
+                     knot_area=NULL,separate_R_aniso=T,all_se=F) {
 
   #Data tables do not always work the same way as data.frames, so ensure they are data.frames
   if (is.null(data) | is.null(growths)) {
@@ -214,6 +215,7 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
       temp_data_list$options_vec[2]<-1
       temp_data_list$prior_pars<-prior_pars
     }
+    if (all_se == T) temp_data_list$options_vec[3]<-1
     if (obs_mort == TRUE) temp_data_list$options_vec[4]<-1
     if (mult_qI == TRUE) temp_data_list$options_vec[5]<-1
     if (spat_approach == "spde_aniso") {

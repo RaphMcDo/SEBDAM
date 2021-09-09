@@ -19,7 +19,8 @@ data_setup(
   spat_approach = NULL,
   knot_obj = NULL,
   knot_area = NULL,
-  separate_R_aniso = T
+  separate_R_aniso = T,
+  all_se = F
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ data_setup(
 \item{knot_area}{dataframe: obtained from setup_pred_grid function, used to know area used for each knot in spatial approach, ignore if using TLM}
 
 \item{separate_R_aniso}{boolean: if using SPDE with geometric anisotropy, set to F is want biomass and recruitment to have same anisotropy}
+
+\item{all_se}{boolean: if using SEBDAM, FALSE to speed up fitting process but not get all standard errors for random effects, TRUE to get all standard errors for random effects but slow down fitting process}
 }
 \value{
 Properly formatted lists for model fitting
