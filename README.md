@@ -10,11 +10,11 @@
 # Resources
 
 - *User Manual*: Please see **Under Construction** for the model equations in relations to the input and output as seen when fitting the model, along with all possible options that can be picked by the user.
-- *Examples*: Please see the **Under Construction** folder for many simple to complex examples, both for real-life cases or simulation experiments.
+- *Examples*: Please see the **Examples** folder for examples of both models, both for real-life cases or simulation experiments.
 - *Papers using TLM*: 
-  -  McDonald, R.R., Keith, D.M., Sameoto, J.A., Hutchings, J.A., Flemming, J.M. Incorporating intra-annual variability in fisheries abundance data to better capture population dynamics. *Submitted to Fisheries Research*.
+  -  McDonald, R.R., Keith, D.M., Sameoto, J.A., Hutchings, J.A., Flemming, J.M. 2021. Incorporating intra-annual variability in fisheries abundance data to better capture population dynamics. *Under review by Fisheries Research*.
 - *Papers using SEBDAM*:
-  - McDonald, R.R., Keith, D.M., Sameoto, J.A., Hutchings, J.A., Flemming, J.M. Explicit incorporation of spatial variability in a biomass dynamics assessment model. *Submitted to the ICES Journal of Marine Science*.
+  - McDonald, R.R., Keith, D.M., Sameoto, J.A., Hutchings, J.A., Flemming, J.M. 2021. Explicit incorporation of spatial variability in a biomass dynamics assessment model. *ICES Journal of Marine Science*. In press.
 
 # References
 
