@@ -1,0 +1,232 @@
+---
+title: "SEBDAM Data Example"
+author: "Raphaël McDonald"
+output: 
+  bookdown::pdf_document2: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(SEBDAM)
+library(sf)
+```
+
+# SEBDAM Data Example
+
+This document aims to demonstrate how to fit SEBDAM to any data, using survey data from the Scallop Production Area 3, in the Canadian Maritimes Inshore Scallop Fishery, as an example alongside simulated landings as the real one are protected by privacy legislation. 
+
+Preliminary work (not shown here) done by the user should be relatively straightforward, simply consisting in making sure their data is organised in a single sf data frame with specific column names. The only modelling decision that is required at this stage will depend on the species of interest in that most species do not have observations that can be linked to the natural mortality of this species. Scallops, as per the example, have clappers, which are dead animals whose shells are still hinged together and which are used as observations for natural mortality. Therefore, if there are, the data will need to include these, while if they do not exist the model will not require them and will instead fix the instantaneous natural mortality to a user-defined choice.
+
+If the user's data contains observations of natural mortality, it should look similar to the following example:
+
+```{r data}
+#Loading raw data
+load("./Data/form_spa3_data.RData")
+form_data$geometry<-form_data$geometry*1000
+sf::st_crs(form_data)<-32619
+str(form_data)
+```
+
+As seen above, each row contains 1 survey tow with its observation of commercial size biomass (column I), the observation of recruit size biomass (column IR), the observed number of clappers (column L), the observed number of shells (live scallops + clappers, column N), the year in which this tow was taken (column Year) and the locations making this data.frame an sf object (column geometry). If the user was not using observations of natural mortality, the data would look very similar except removing the columns L and N.
+
+The only other requirement to get started is to have the polygon/polygons that represent the edges of the modelling area, as shown in the following example:
+
+```{r area}
+load("./Data/spa3_model_area.RData")
+library(ggplot2)
+ggplot()+geom_sf(data=plan_bound,col="red",fill=NA)+geom_sf(data=ns_map_84)+coord_sf(xlim=c(-67,-65.7),ylim=c(43.5,44.6))+theme_bw()
+```
+
+The area of this example is on the western shore of Nova Scotia, Canada, with the red polygon showing the area that is included in the modelling approach and with land in grey. 
+
+Once we have the modelling polygon and the formatted data, we can take the first step in utilizing SEBDAM.
+
+## Step 1: Setting up predictive knots and mesh
+
+The first step utilizes the function setup_mesh() to obtain the locations of predictive knots based on the locations of each observations, and from those knots create a predictive mesh on which the random fields can be computed. This function requires the following parameters:
+
+- data: Formatted data into an sf data frame, as demonstrated above.
+
+- seed: to set the seed for reproducibility
+
+- nknot: the number of predictive knots to be created (default of 25)
+
+- model_bound: sf polygon/polygons representing the borders of the modelling area (and islands or any land barriers for barrier models)
+
+There are other parameters that have not been fully tested or are unecessary for the usual purposes and are therefore not discussed here. Therefore, we would obtain the knots and mesh the following way:
+
+```{r mesh-knots}
+knots_mesh<-setup_mesh(data=form_data,seed=20,nknot=25,model_bound=plan_bound)
+```
+
+This gives us the following objects:
+
+- knots: a kmeans object that includes everything obtained from running kmeans to obtain the knot location, mostly in case the user wants to examine it more closely
+
+- mesh: the predictive mesh used for the random fields created with INLA::inla.mesh.2d.
+
+```{r mesh-plot}
+library(inlabru)
+ggplot()+gg(knots_mesh$mesh)+geom_point(data=as.data.frame(knots_mesh$knots$centers),aes(x=X,y=Y))
+```
+
+- crs: utm coordinate reference system that was automatically chosen based on the WGS84 coordinates of data
+
+- utm_bound: sf polygon representing the the modelling projected into the UTM system
+
+```{r area-plot-utm}
+plot(knots_mesh$utm_bound)
+```
+
+## Step 2: Create the predictive grid
+
+The second step utilizes the function setup_pred_grid() to create the predictive grid used to extrapolate from the densities predicted by the model to the whole area of interest. It simply requires the knots object from Step 1, and the boundaries of the modelling area which can also be obtained from the results of step 1.
+
+```{r setup-grid}
+pred_grid<-setup_pred_grid(knots=knots_mesh$knots,model_bound=knots_mesh$utm_bound)
+```
+
+The output has 2 components:
+
+- grid: Contains the sf object used for extrapolation and plotting.
+
+```{r plot-grid}
+plot(pred_grid$grid)
+```
+
+- area: contains the area in square kilometers (given that everything follows the default UTM coordinate reference system) associated with each knot.
+
+## Step 3: Setup the data object
+
+The third step, arguably the most important one, is where the data is given to the function data_setup() to format it properly for TMB. It is also the step in which many of the modelling decisions must be made through its required parameters.
+
+- data: formatted dataframe containing the user data, as described earlier in this document.
+
+- growths: a dataframe containing the growth rates in 2 columns: g for commercial size growth rates, and gR for recruit growth rates.
+
+```{r growth-example}
+load("./Data/spa3_growths.RData")
+colnames(spa3_growths)<-c("g","gR")
+str(spa3_growths)
+```
+
+- catch: dataframe of catches attributed to each knots and scaled down to kilometer square. The example given here has already done the work, but there is a function currently being worked on to allow spreading the catch and scaling it appropriately as part of this package. 
+
+```{r catch-example}
+load("./Data/spa3_sim_catch.RData")
+str(as.data.frame(sim_catches))
+```
+
+- model: character string to choose which model, only options are SEBDAM or TLM. The choice here has to be SEBDAM, TLM is covered by a different example file.
+
+- mesh: mesh obtained in step 1.
+
+- bound: only required if using a barrier model, will be ignored in this example.
+
+- obs_mort: whether to fix the instantaneous natural mortality or use observations to predict it. If fixing, obs_mort=FALSE, and the data only needs observations of commercial biomass and recruitment. If predicting, obs_mort=TRUE, and the data needs the number of dead animals L (clappers in this scallop example) and the total number of animals, dead or alive, in the same observation N.
+
+- prior: whether to use a prior beta distribution to inform the estimation of the commercial catchability/ies. prior=TRUE if wants to inform, prior=FALSE to freely estimate.
+
+- prior_pars: only if informing with a beta distribution, specify the two shape parameters desired (default are 10 and 12).
+
+- fix_m: only if obs_mort=FALSE, value at which the instantaneous natural mortality is to be fixed (default at 0.1).
+
+- mult_qI: whether to estimate a single commercial biomass catchability or one per knot. If a single, mult_qI=FALSE, else for multiple mult_qI=TRUE.
+
+- spat_approach: what type of spatial approach to use in the estimation of the Gaussian Markov Random Fields. Options are: "spde" for the normal isotropic Stochastic Partial Differential Equation, "spde_aniso" for the SPDE approach that accounts for geometric anisotropy, and "barrier" for a barrier model using a finite element method.
+
+- knot_obj: kmeans object obtained in step 1.
+
+- knot_area: area attributed to each knot in step 2.
+
+- separate_R_aniso: only if using "spde_aniso" as a spatial choice, whether to estimate separate anisotropy parameters for the recruitment or to have them be the same as for the commercial biomass.
+
+- all_se: whether to obtain the standard error for all the random effects (not getting them speeds up computational speed dramatically). all_se=TRUE to obtain them, all_se=FALSE otherwise.
+
+```{r data-setup}
+set_data<-data_setup(data=form_data,growths=spa3_growths,catch=as.data.frame(sim_catches),model="SEBDAM",mesh=knots_mesh$mesh,obs_mort=TRUE,prior=TRUE,prior_pars=c(10,12),mult_qI=FALSE,spat_approach="spde_aniso",knot_obj=knots_mesh$knots,knot_area=pred_grid$area,separate_R_aniso = FALSE,all_se=FALSE)
+```
+
+This function returns 4 lists necessary for fitting the SEBDAM model through TMB. These are the following:
+
+- data: all necessary data formatted in the appropriate way for SEBDAM.
+
+```{r dat}
+str(set_data$data)
+```
+
+- par: starting values for all of SEBDAM's parameters.
+
+```{r par}
+str(set_data$par)
+```
+
+- random: vector of character strings indicating which parameters are random effects.
+
+```{r rand}
+str(set_data$random)
+```
+
+- map: which parameters to fix or ignore, depending on modelling choices. In this example, as we have decided to make both the commercial biomass and the recruitment have the same anisotropy parameters, the recruitment anisotropy parameters are ignored:
+
+```{r map}
+str(set_data$map)
+```
+
+## Step 4: Fit the model!
+
+Now that everything is formatted appropriately, the model can be directly fit using the fit_model() function. This function requires few decisions and parameters, atleast compared to the previous ones where the modelling decisions were made. It requires the following:
+
+- tmb_obj: list obtained from data_setup() in step 3.
+
+- optim: which optimizer to use, with 3 options: "nlminb" for backward compatibility if required (as it it not recommended to use anymore), default "optimr" from the package optimx which offers various optimizers, and "parallel" for non-Windows users if desired.
+
+- control: for specifications using "nlminb", ignored otherwise
+
+- optim_method: for choice of optimization method when using "optimr", default is "nlminb" (see package optimx for more options).
+
+- cores: for use with "parallel"
+
+- bias.correct: for bias correction with function sdreport after fitting the model, default is FALSE.
+
+- silent: to silence the fitting process, default is TRUE.
+
+```{r fit-model}
+#This can take quite some time, ~30 min depending on the computer
+mod_fit<-fit_model(set_data)
+```
+
+This returns all of the raw output from the model fitting process. As there are two functions to get the predicted random effects and the parameter estimates alongside standard errors, we will only look at the most important output for this point to know if the model successfully fit.
+
+- message: This indicates if the model has successfully converged. The two successful messages would be "relative convergence (4)" or "X and relative convergence [5]". Other possible output include "false convergence [8]", which indicate that the model would not have successfully converged. If the output doesn't exist (NA), then the model did not successfully converge.
+
+## Step 5: Obtaining parameter estimates with standard errors
+
+While the parameter estimates are technically available in the output from step 4, the get_parameters() has been created to obtain them in a more user-friendly fashion. The only thing it needs is:
+
+- return_obj: object returned from step 4.
+
+```{r param}
+params<-get_parameters(mod_fit)
+str(params)
+rownames(params)
+```
+
+The row names are the parameters, with estimates in the first column and standard errors in the second column.
+
+## Step 6: Get predicted random effects/processes.
+
+The function get_processes() works in the exact same way as get_parameters().
+
+```{r process}
+pred_proc<-get_processes(mod_fit)
+str(pred_proc)
+```
+
+The output contains 2 main data frames: 
+
+- densities: Contains the predicted densities and standard errors for biomass, recruitment and natural mortality. 
+
+- totals: contains the predicted overall process for the whole area including total biomass, total recruitment, and mean natural mortality. 
+
+

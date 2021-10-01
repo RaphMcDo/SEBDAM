@@ -1,0 +1,145 @@
+---
+title: "SEBDAM Data Example"
+author: "Raphaël McDonald"
+output: 
+  bookdown::pdf_document2: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(SEBDAM)
+```
+
+# TLM Data Example
+
+This document aims to demonstrate how to fit TLM to any data, using survey data from the Scallop Production Area 3, in the Canadian Maritimes Inshore Scallop Fishery, as an example alongside simulated landings as the real one are protected by privacy legislation. 
+
+Preliminary work (not shown here) done by the user should be relatively straightforward, simply consisting in making sure their data is organised in a single data frame with specific column names. The only modelling decision that is required at this stage will depend on the species of interest in that most species do not have observations that can be linked to the natural mortality of this species. Scallops, as per the example, have clappers, which are dead animals whose shells are still hinged together and which are used as observations for natural mortality. Therefore, if there are, the data will need to include these, while if they do not exist the model will not require them and will instead fix the instantaneous natural mortality to a user-defined choice.
+
+If the user's data contains observations of natural mortality, it should look similar to the following example:
+
+```{r data}
+#Loading raw data
+load("./Data/form_spa3_tlm.RData")
+str(form_TLM_data)
+```
+
+As seen above, each row contains 1 survey tow with its observation of commercial size biomass (column I), the observation of recruit size biomass (column IR), the observed number of clappers (column L), the observed number of shells (live scallops + clappers, column N), the year in which this tow was taken (column Year). If the user was not using observations of natural mortality, the data would look very similar except removing the columns L and N.
+
+One can proceed with TLM simply with this formatted data frame.
+
+## Step 1: Setup data for TMB.
+
+The first step consists in reformatting the data in a way that TMB can understand using the data_setup() function. This is also the step where the few required modelling decisions have to be made. As this function is also used for SEBDAM, it has a lot of possible parameters that are ignored when using TLM, so we will only look at the ones required by TLM here.
+
+- data: formatted dataframe as shown earlier in this document.
+
+- growths: dataframe containing the growth rates g and gR, which should look like the following:
+
+```{r growths}
+load("./Data/spa3_growths.RData")
+colnames(spa3_growths)<-c("g","gR")
+str(spa3_growths)
+```
+
+- catch: vector of landings in each year like the following:
+
+```{r catch}
+load("./Data/sim_catches_TLM.RData")
+str(sim_catches_TLM)
+```
+
+- model: choice of model, has to be "TLM" for our purpose here.
+
+- obs_mort: whether to use observations of mortality to predict natural mortality, if there are obs_mort=TRUE, if not obs_mort=FALSE.
+
+- prior: whether to use a prior beta distribution to estimate the commercial catchability, if yes prior=TRUE, if not prior=FALSE.
+
+- prior_pars: choice of shape parameters used for the prior beta distribution (defaults are 10 and 12).
+
+```{r data-setup}
+set_data<-data_setup(data=form_TLM_data,growths = spa3_growths,catch = sim_catches_TLM,model="TLM",obs_mort=TRUE,prior=TRUE)
+```
+
+This returns the raw lists required by TMB to fit the model.
+
+- data: all necessary data formatted in the appropriate way for TLM.
+
+```{r dat}
+str(set_data$data)
+```
+
+- par: starting values for all of TLM's parameters.
+
+```{r par}
+str(set_data$par)
+```
+
+- random: vector of character strings indicating which parameters are random effects.
+
+```{r rand}
+str(set_data$random)
+```
+
+- map: which parameters to fix or ignore, depending on modelling choices. In this example, as we are using data to get to the natural mortality, it should be empty:
+
+```{r map}
+str(set_data$map)
+```
+
+## Step 2: Fit the model!
+
+Now that everything is formatted appropriately, the model can be directly fit using the fit_model() function. This function requires few decisions and parameters, atleast compared to the previous ones where the modelling decisions were made. It requires the following:
+
+- tmb_obj: list obtained from data_setup() in step 1.
+
+- optim: which optimizer to use, with 3 options: "nlminb" for backward compatibility if required (as it it not recommended to use anymore), default "optimr" from the package optimx which offers various optimizers, and "parallel" for non-Windows users if desired.
+
+- control: for specifications using "nlminb", ignored otherwise
+
+- optim_method: for choice of optimization method when using "optimr", default is "nlminb" (see package optimx for more options).
+
+- cores: for use with "parallel"
+
+- bias.correct: for bias correction with function sdreport after fitting the model, default is FALSE.
+
+- silent: to silence the fitting process, default is TRUE.
+
+```{r fit-model}
+#This can take quite some time, ~30 min depending on the computer
+mod_fit<-fit_model(set_data)
+```
+
+This returns all of the raw output from the model fitting process. As there are two functions to get the predicted random effects and the parameter estimates alongside standard errors, we will only look at the most important output for this point to know if the model successfully fit.
+
+- message: This indicates if the model has successfully converged. The two successful messages would be "relative convergence (4)" or "X and relative convergence [5]". Other possible output include "false convergence [8]", which indicate that the model would not have successfully converged. If the output doesn't exist (NA), then the model did not successfully converge.
+
+## Step 3: Obtaining parameter estimates with standard errors
+
+While the parameter estimates are technically available in the output from step 4, the get_parameters() has been created to obtain them in a more user-friendly fashion. The only thing it needs is:
+
+- return_obj: object returned from step 2.
+
+```{r param}
+params<-get_parameters(mod_fit)
+str(params)
+rownames(params)
+```
+
+The row names are the parameters, with estimates in the first column and standard errors in the second column.
+
+## Step 4: Get predicted random effects/processes.
+
+The function get_processes() works in the exact same way as get_parameters().
+
+```{r process}
+pred_proc<-get_processes(mod_fit)
+str(pred_proc)
+```
+
+This returns a single list, processes, which contains the predicted biomass, recruitment and natural mortality along with their respective standard errors.
+
+
+
+
+
