@@ -3,7 +3,7 @@
 - The SEBDAM package contains 2 models: SEBDAM, previously described, and TLM (Tow-Level Model), a strictly temporal biomass dynamics models that can be directly compared to SEBDAM.
 
 ## Installation
-- Installation requires the installation of the *devtools* package in R and uses the function *install_github("RaphMcDo/SEBDAM").
+- Installation requires the installation of the *devtools* package in R and uses the function *install_github("RaphMcDo/SEBDAM")*.
 
 ## Background
 - SEBDAM was designed to incorporate spatial variability and autocorrelations in fishery-independent observations directly into traditional biomass dynamics model and model the underyling processes (biomass, recruitment and natural mortality) as explicitly spatial processes.
