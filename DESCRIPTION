@@ -1,13 +1,13 @@
 Package: SEBDAM
-Title: What the Package Does (One Line, Title Case)
+Title: Fitting a Spatially Explicit Biomass Dynamics Assessment Model (SEBDAM)
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Raphaël",
            family = "McDonald",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+           email = "rp732243@dal.ca",
+           comment = c(ORCID = "0000-0002-4406-9726"))
+Description: SEBDAM is a package for the implementation of a Spatially Explicit Biomass Dynamics Assessment Model (SEBDAM) or the Tow Level Model (TLM).
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
