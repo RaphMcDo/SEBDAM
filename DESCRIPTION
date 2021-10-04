@@ -19,4 +19,5 @@ Imports:
     sf,
     INLA,
     dplyr,
-    stringr
+    stringr,
+    optimx
