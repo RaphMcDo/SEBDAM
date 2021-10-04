@@ -3,7 +3,7 @@
 - The SEBDAM package contains 2 models: SEBDAM, previously described, and TLM (Tow-Level Model), a strictly temporal biomass dynamics models that can be directly compared to SEBDAM.
 
 ## Installation
-- Installation requires the installation of the *devtools* package in R and uses the function *devtools::install_github("RaphMcDo/SEBDAM")*. Other packages that need to be installed are *sf*, *dplyr*, *stringr*, *optimx* and *INLA*. The first four packages are on CRAN, while INLA has to be installed following the instructions at https://www.r-inla.org/download-install.
+- Installation requires the installation of the *devtools* package in R and uses the function *devtools::install_github("RaphMcDo/SEBDAM")*. Other packages that need to be installed are *sf*, *dplyr*, *stringr*, *optimx*, *parallel* (for non-Windows users) and *INLA*. The first five packages are on CRAN, while INLA has to be installed following the instructions at https://www.r-inla.org/download-install.
 
 ## Background
 - SEBDAM was designed to incorporate spatial variability and autocorrelations in fishery-independent observations directly into traditional biomass dynamics model and model the underyling processes (biomass, recruitment and natural mortality) as explicitly spatial processes.
