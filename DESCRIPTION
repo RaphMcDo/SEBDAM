@@ -20,4 +20,5 @@ Imports:
     INLA,
     dplyr,
     stringr,
-    optimx
+    optimx,
+    parallel
