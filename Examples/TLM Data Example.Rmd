@@ -106,7 +106,6 @@ Now that everything is formatted appropriately, the model can be directly fit us
 - silent: to silence the fitting process, default is TRUE.
 
 ```{r fit-model}
-#This can take quite some time, ~30 min depending on the computer
 mod_fit<-fit_model(set_data)
 ```
 

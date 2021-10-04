@@ -8,3 +8,9 @@
 *.RData
 dev_compile.R
 testing.R
+!form_spa3_data.RData
+!form_spa3_tlm.RData
+!sim_catches_TLM.RData
+!spa3_growths.RData
+!spa3_model_area.RData
+!spa3_sim_catch.RData
