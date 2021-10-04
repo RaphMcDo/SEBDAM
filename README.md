@@ -1,4 +1,4 @@
-## SEBDAM
+## SEBDAM (Functional but still under construction)
 - SEBDAM is an R package for fitting a Spatially-Explicit Biomass Dynamics Assessment Model in a state-space framework to fishery-independent data. Built for the assessment of scallop fisheries, it can easily be applied to any marine animals that exhibits spatially heterogeneous area utilization inside of a given stock.
 - The SEBDAM package contains 2 models: SEBDAM, previously described, and TLM (Tow-Level Model), a strictly temporal biomass dynamics models that can be directly compared to SEBDAM.
 
