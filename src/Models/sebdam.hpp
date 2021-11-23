@@ -63,6 +63,8 @@ Type sebdam(objective_function <Type>* obj) {
   DATA_VECTOR(gI); //commercial biomass growth
   DATA_VECTOR(gR); //recruitment growth
 
+  DATA_SCALAR(plug_exploit); //Desired exploitation rate for simulations, not used when fitting data
+
   //Parameters
   PARAMETER(log_sigma_epsilon); //obs sd survey index commercial biomass
   PARAMETER(log_sigma_upsilon); //obs sd survey index recruits
@@ -537,7 +539,7 @@ Type sebdam(objective_function <Type>* obj) {
             //Calculate proportion of total biomass at knot s
             Type prop_B; prop_B = (B(s,t-1)*area(s))/counter_B(t-1);
             //Simulate total landings from total biomass on log scale
-            Type exploitation =  exp(log(((counter_B(t-1)/1000)*0.1)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
+            Type exploitation =  exp(log(((counter_B(t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
             //Simulate landings per km^2 at knot s
             C(s,t-1) = exp(log((exploitation*prop_B)/area(s)) + rnorm(Type(0.0),Type(0.2)));
             //Simulate biomass density
@@ -552,7 +554,7 @@ Type sebdam(objective_function <Type>* obj) {
         //Calculate proportion of total biomass at knot s
         Type prop_B; prop_B = (B(s,n_t-1)*area(s))/counter_B(n_t-1);
         //Simulate total landings from total biomass on log scale
-        Type exploitation = exp(log(((counter_B(n_t-1)/1000)*0.1)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
+        Type exploitation = exp(log(((counter_B(n_t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
         //Simulate landings per km^2 at knot s
         C(s,n_t-1) = exp(log((exploitation*prop_B)/area(s)) + rnorm(Type(0.0),Type(0.2)));
         //Simulate biomass density
@@ -583,7 +585,7 @@ Type sebdam(objective_function <Type>* obj) {
             }
             //Proportion of above average biomass at knot
             Type prop_B; prop_B = (B(s,t-1)*area(s))/sum_pop;
-            Type exploitation =  exp(log(((counter_B(t-1)/1000)*0.1)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
+            Type exploitation =  exp(log(((counter_B(t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
             if ( (B(s,t-1)*area(s)) > (counter_B(t-1)/n_s) ) C(s,t-1) = (exp(log((exploitation/area(s))*prop_B))+ rnorm(Type(0.0),Type(0.2)));
             else C(s,t-1) = Type(0.0);
             mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
@@ -601,7 +603,7 @@ Type sebdam(objective_function <Type>* obj) {
           }
         }
         Type prop_B; prop_B = (B(s,n_t-1)*area(s))/sum_pop;
-        Type exploitation = exp(log(((counter_B(n_t-1)/1000)*0.1)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
+        Type exploitation = exp(log(((counter_B(n_t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
         if ( (B(s,n_t-1)*area(s)) > (counter_B(n_t-1)/n_s) ) C(s,n_t-1) = exp(log((exploitation/area(s))*prop_B) + rnorm(Type(0.0),Type(0.2)));
         else C(s,n_t-1) = Type(0.0);
         mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
@@ -631,7 +633,7 @@ Type sebdam(objective_function <Type>* obj) {
             }
 
             Type prop_B; prop_B = (B(s,t-1)*area(s))/sum_pop;
-            Type exploitation =  exp(log(((counter_B(t-1)/1000)*0.1)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
+            Type exploitation =  exp(log(((counter_B(t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
             if ( (B(s,t-1)*area(s)) > (counter_B(t-1)/n_s) ) C(s,t-1) = (exp(log((exploitation/area(s))*prop_B))+ rnorm(Type(0.0),Type(0.2)));
             else C(s,t-1) = B(s,t-1)*0.02*exp(rnorm(Type(0.0),Type(0.2)));
             mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
@@ -649,7 +651,7 @@ Type sebdam(objective_function <Type>* obj) {
           }
         }
         Type prop_B; prop_B = (B(s,n_t-1)*area(s))/sum_pop;
-        Type exploitation = exp(log(((counter_B(n_t-1)/1000)*0.1)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
+        Type exploitation = exp(log(((counter_B(n_t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
         if ( (B(s,n_t-1)*area(s)) > (counter_B(n_t-1)/n_s) ) C(s,n_t-1) = exp(log((exploitation/area(s))*prop_B) + rnorm(Type(0.0),Type(0.2)));
         else C(s,n_t-1)=B(s,n_t-1)*0.02*exp(rnorm(Type(0.0),Type(0.2)));
         mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));

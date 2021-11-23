@@ -38,7 +38,6 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
     stop("Incorrect model choice, options are currently SEBDAM or TLM")
   }
 
-
   if (model == "TLM") {
 
     #Check
@@ -109,6 +108,8 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
     temp_data_list$pos_tows_IR<-non_zeroes_IR
 
     temp_data_list$t_i<-(data$Year-min(data$Year))
+
+    temp_data_list$plug_exploit<-0.1
 
     if (obs_mort == FALSE) temp_data_list$set_m<-fix_m
 
@@ -266,6 +267,8 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
 
     temp_data_list$gI<-growths$g
     temp_data_list$gR<-growths$gR
+
+    temp_data_list$plug_exploit<-0.1
 
     temp_par_list<-list()
     temp_par_list$log_sigma_epsilon<--1

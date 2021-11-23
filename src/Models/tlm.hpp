@@ -34,6 +34,8 @@ Type tlm(objective_function <Type>* obj) {
   //Indices
   DATA_FACTOR(t_i); //index to identify what year to attribute observation
 
+  DATA_SCALAR(plug_exploit); // Exploitation rate desired for simulations, not used when fitting data
+
   //----------------------------------------------------------------------------
   // Parameters
   //----------------------------------------------------------------------------
@@ -171,7 +173,7 @@ Type tlm(objective_function <Type>* obj) {
   SIMULATE {
     B(0) = Type(1000);
     log_B(0) = log(B(0));
-    C(0) = exp(log(B(0)/Type(10.0))+rnorm(Type(0.0),Type(0.2)));
+    C(0) = exp(log(B(0)*plug_exploit)+rnorm(Type(0.0),Type(0.2)));
     for (int t = 1; t < (NY+1); t++){
       Type mean_proc_B = (exp(-m[t])*g[t-1]*(B[t-1]-C[t-1])+exp(-m[t])*gR[t-1]*R[t-1]);
       B(t) = exp(log(mean_proc_B) - (sqr(sigma_tau)/2) + rnorm(Type(0.0),sigma_tau));

@@ -36,10 +36,12 @@ The first step is to create the object that is given to TMB in which data and ra
 
 - prior_q: TRUE if user desires to use a beta distribution to inform the commercial size catchability qI
 
+- exploit: desired exploitation rate to simulate landings (must be between 0 and <1).
+
 ```{r sim-obj}
 
 simobj<-simulate_obj(model="TLM",n_years=10,obs_mort=F,n_obs=1000,even_spread=F,
-                     gI=rep(1.1,10),gR=rep(1.4,10),prior_q=T)
+                     gI=rep(1.1,10),gR=rep(1.4,10),prior_q=T,exploit=0.1)
 
 ```
 

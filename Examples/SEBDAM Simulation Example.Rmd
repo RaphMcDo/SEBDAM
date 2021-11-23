@@ -101,11 +101,14 @@ The second step is to create the object in which TMB will simulate data and rand
 
 - bound: only used if the spatial approach is a barrier model, sf object that represents the land boundaries (including islands) of the modelling area
 
+
+- exploit: desired exploitation rate to simulate landings (must be between 0 and <1).
+
 ```{r simulate-obj}
 
 simobj<-simulate_obj(model="SEBDAM",n_years=10,obs_mort=FALSE,even_spread=FALSE,fix_m=0.25,
                      gI=rep(1.2,10),gR=rep(1.3,10),prior_q=TRUE,catch_spread="prop",
-                     simul_area_obj = areasim,mult_qI=FALSE,spat_approach="spde")
+                     simul_area_obj = areasim,mult_qI=FALSE,spat_approach="spde", exploit=0.4)
 #Examples if using different approaches
 #simobj<-simulate_obj(model="SEBDAM",n_years=10,obs_mort=TRUE,even_spread=FALSE,prior_q=TRUE,
 #catch_spread="aggregated",simul_area_obj = areasim,mult_qI=TRUE,
@@ -230,7 +233,7 @@ This is an example of how one could test out SEBDAM to see the impact of using t
 areasim<-simulate_area(n_obs=1000,n_knots=20,seed=20)
 simobj<-simulate_obj(model="SEBDAM",n_years=10,obs_mort=FALSE,even_spread=FALSE,fix_m=0.25,
                      gI=rep(1.2,10),gR=rep(1.3,10),prior_q=TRUE,catch_spread="prop",
-                     simul_area_obj = areasim,mult_qI=FALSE,spat_approach="spde_aniso")
+                     simul_area_obj = areasim,mult_qI=FALSE,spat_approach="spde_aniso",exploit=0.3)
 simpar<-simulate_SEBDAM_params(simobj,sigma_epsilon=0.5,sigma_upsilon=0.5,sigma_B=0.2)
 #Setup for running the simulations multiple time
 n_sim<-10
