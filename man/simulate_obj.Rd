@@ -19,7 +19,8 @@ simulate_obj(
   mult_qI = FALSE,
   spat_approach = "spde",
   separate_R_aniso = TRUE,
-  bound = NULL
+  bound = NULL,
+  exploit = 0.1
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ simulate_obj(
 \item{separate_R_aniso}{boolean: ignored if using TLM or using spde or barrier spatial approaches, choice of having separate anisotropy parameters for R or the same as for B}
 
 \item{bound}{sf object: boundaries of modelling only when using barrier model, must includes islands}
+
+\item{exploit}{double: chosen exploitation rate for simulations, must be between 0 and < 1}
 }
 \value{
 list: object used for simulations in simulate_data function

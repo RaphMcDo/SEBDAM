@@ -35,6 +35,7 @@ get_processes<-function(return_obj) {
 
     R<-return_obj$report$R
     R<-c(R,rep(NA,return_obj$obj$env$data$n_s))
+    R<-matrix(R,ncol=return_obj$obj$env$data$n_t+1,nrow=return_obj$obj$env$data$n_s)
     if (return_obj$obj$env$data$options_vec[3]==1) {
       se_R<-matrix(unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$sd)=="R")]),ncol=return_obj$obj$env$data$n_t)
       se_R[,(return_obj$obj$env$data$n_t)]<-rep(NA,return_obj$obj$env$data$n_s)

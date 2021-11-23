@@ -15,6 +15,7 @@
 #' @param spat_approach character: ignored if using TLM, choice of spatial approach, options are spde, spde_aniso and barrier
 #' @param separate_R_aniso boolean: ignored if using TLM or using spde or barrier spatial approaches, choice of having separate anisotropy parameters for R or the same as for B
 #' @param bound sf object: boundaries of modelling only when using barrier model, must includes islands
+#' @param exploit double: chosen exploitation rate for simulations, must be between 0 and < 1
 #'
 #' @return list: object used for simulations in simulate_data function
 #' @export
@@ -26,9 +27,14 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
                         prior_q=FALSE, catch_spread=NULL,
                         simul_area_obj=NULL,
                         mult_qI=FALSE,spat_approach="spde",
-                        separate_R_aniso=TRUE,bound=NULL) {
+                        separate_R_aniso=TRUE,bound=NULL, exploit=0.1) {
 
   if (!(model %in% c("TLM","SEBDAM"))) stop("Incorrect Model Choice")
+
+  #Check that exploitation is positive and < 1
+  if (!(exploit >= 0 ) | !(exploit < 1)) {
+    stop("Exploitation rate has to be between 0 and < 1.")
+  }
 
   if (model=="TLM") {
 
@@ -50,6 +56,8 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
 
     temp_data_list$g<-gI
     temp_data_list$gR<-gR
+
+    temp_data_list$plug_exploit<-exploit
 
     temp_div<-length(temp_data_list$logI)/n_years
     rand_vec<-rand_int_vect(min=round(temp_div/2),max=round(temp_div+0.5*temp_div),n_grp=n_years,total=length(temp_data_list$logI))
@@ -161,6 +169,8 @@ simulate_obj<-function(model=NULL, n_years=1L, obs_mort=FALSE,
 
     temp_data_list$gI<-gI
     temp_data_list$gR<-gR
+
+    temp_data_list$plug_exploit<-exploit
 
     if (spat_approach %in% c("spde","spde_aniso")){
       if (spat_approach == "spde") temp_data_list$mesh_obj<-(INLA::inla.spde2.matern(simul_area_obj$mesh))$param.inla[c("M0","M1","M2")]
