@@ -107,6 +107,7 @@ Now that everything is formatted appropriately, the model can be directly fit us
 
 ```{r fit-model}
 mod_fit<-fit_model(set_data)
+
 ```
 
 This returns all of the raw output from the model fitting process. As there are two functions to get the predicted random effects and the parameter estimates alongside standard errors, we will only look at the most important output for this point to know if the model successfully fit.
