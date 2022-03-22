@@ -14,3 +14,4 @@ testing.R
 !spa3_growths.RData
 !spa3_model_area.RData
 !spa3_sim_catch.RData
+*.png
