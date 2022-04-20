@@ -61,53 +61,38 @@ Type sehbam(objective_function <Type>* obj) {
   DATA_FACTOR(t_i); //Indexing for year (dim n_i)
   DATA_FACTOR(v_i); //Indexing for specific mesh location to match knots with right vertex (dim n_m)
   DATA_FACTOR(h_i); //Indexing for habitat type (dim n_i)
+  DATA_FACTOR(s_a); //Indexing knot for area for growth rates
 
   //Fixed covariates
-  DATA_VECTOR(gI); //commercial biomass growth
-  DATA_VECTOR(gR); //recruitment growth
-
-  //Percent cover at each knot of each benthoscape
-  DATA_MATRIX(prop_s_h);
+  DATA_MATRIX(gI); //commercial biomass growth
+  DATA_MATRIX(gR); //recruitment growth
 
   DATA_SCALAR(plug_exploit); //Desired exploitation rate for simulations, not used when fitting data
 
   //Parameters
   PARAMETER(log_sigma_epsilon); //obs sd survey index commercial biomass
   PARAMETER(log_sigma_upsilon); //obs sd survey index recruits
-  // PARAMETER(log_R0);//initial recruit mean value
+  PARAMETER(log_R0);//initial recruit mean value
   PARAMETER(log_B0);//initial commercial biomass mean value
   PARAMETER(log_m0);//initial mortality mean value
-  // PARAMETER(lambda_I); //Poisson expectation for commercial size observations
-  // PARAMETER(lambda_IR); //Poisson expectation for recruit size observations
   PARAMETER(mu_I);
   PARAMETER_VECTOR(mu_IR);
   PARAMETER(log_var_I);
   PARAMETER_VECTOR(log_var_IR);
   PARAMETER_VECTOR(log_qR); //recruit catchability
   PARAMETER_VECTOR(beta_I); //intercept and slopes for regression to obtain excess zero probabilities for commercial size
-  // PARAMETER_VECTOR(beta_IR); //intercept and slopes for regression to obtain excess zero probabilities for recruit size
-  // PARAMETER(beta_dens_I);
-  // PARAMETER(beta_dens_IR);
-
-  // PARAMETER_VECTOR(log_init_B);
-  PARAMETER_VECTOR(log_init_R);
-  // PARAMETER_VECTOR(log_init_m);
-  // vector <Type> init_B = exp(log_init_B);
-  vector <Type> init_R = exp(log_init_R);
-  // vector <Type> init_m = exp(log_init_m);
 
   //Transform parameters
   Type pi = M_PI;
   Type sigma_epsilon = exp(log_sigma_epsilon);
   Type sigma_upsilon = exp(log_sigma_upsilon);
   vector <Type> qR = exp(log_qR);
-  // Type R0 = exp(log_R0);
+  Type R0 = exp(log_R0);
   Type B0 = exp(log_B0);
   Type m0 = exp(log_m0);
   vector <Type> logit_zip_I(n_i);
   vector <Type> logit_zip_IR(n_i);
   vector <Type> zip_I(n_i);
-  // vector <Type> zip_IR(n_i);
   Type var_I = exp(log_var_I);
   vector <Type> var_IR = exp(log_var_IR);
 
@@ -116,12 +101,6 @@ Type sehbam(objective_function <Type>* obj) {
   PARAMETER_ARRAY(omega_R);
 
   // Set up matrices for processes of interest
-  array <Type> sub_log_B(n_s,(n_t+1),n_h);
-  array <Type> sub_log_R(n_s,(n_t+1),n_h);
-  array <Type> sub_log_m(n_s,(n_t+1),n_h);
-  // array <Type> sub_B(n_s,(n_t+1),n_h);
-  // array <Type> sub_R(n_s,(n_t+1),n_h);
-  // array <Type> sub_m(n_s,(n_t+1),n_h);
   matrix <Type> log_B(n_s,(n_t+1));
   matrix <Type> B(n_s,(n_t+1));
   matrix <Type> areaB(n_s,(n_t+1));
@@ -232,10 +211,6 @@ Type sehbam(objective_function <Type>* obj) {
       REPORT(log_H_input_R);
       REPORT(H_B);
       REPORT(H_R);
-      ADREPORT(log_H_input_B);
-      ADREPORT(log_H_input_R);
-      ADREPORT(H_B);
-      ADREPORT(H_R);
 
       SIMULATE {
         SparseMatrix <Type> Q_B = Q_spde(mesh_obj, kappa_B, H_B);
@@ -349,16 +324,13 @@ Type sehbam(objective_function <Type>* obj) {
     //For mortality
     for (int s = 0; s < n_s; s++){
       log_m(s,0) = log(m0);
-      // log_m(s,0) = log_init_m(s);
       m(s,0) = exp(log_m(s,0));
       for (int t = 1; t < (n_t); t++){
         log_m(s,t) = log(m0);
-        // log_m(s,t) = log_init_m(s);
         m(s,t) = exp(log_m(s,t));
       }
       //Project 1 year ahead
       log_m(s,n_t) = log(m0);
-      // log_m(s,n_t) = log_init_m(s);
       m(s,n_t) = exp(log_m(s,n_t));
     }
 
@@ -431,8 +403,6 @@ Type sehbam(objective_function <Type>* obj) {
 
         REPORT(log_H_input_m);
         REPORT(H_m);
-        ADREPORT(log_H_input_m);
-        ADREPORT(H_m);
       }
 
       REPORT(kappa_m);
@@ -482,7 +452,6 @@ Type sehbam(objective_function <Type>* obj) {
     //For mortality
     for (int s = 0; s < n_s; s++){
       log_m(s,0) = log(m0 * exp(omega_m(v_i(s),0)));
-      // log_m(s,0) = log(init_m(s) * exp(omega_m(v_i(s),0)));
       m(s,0) = exp(log_m(s,0));
       for (int t = 1; t < (n_t); t++){
         log_m(s,t) = log( m(s,t-1) * exp(omega_m(v_i(s),t)) );
@@ -503,8 +472,7 @@ Type sehbam(objective_function <Type>* obj) {
 
   //Recruit derivation
   for (int s = 0; s < n_s; s++){
-    // log_R(s,0) = log(R0 * exp(omega_R(v_i(s),0)));
-    log_R(s,0) = log(init_R(s) * exp(omega_R(v_i(s),0)));
+    log_R(s,0) = log(R0 * exp(omega_R(v_i(s),0)));
     R(s,0) = exp(log_R(s,0));
     for (int t = 1; t < (n_t); t++){
       log_R(s,t) = log(R(s,t-1)*exp(omega_R(v_i(s),t)));
@@ -515,15 +483,14 @@ Type sehbam(objective_function <Type>* obj) {
   //Biomass derivation
   for (int s = 0; s < n_s; s++) {
     log_B(s,0) = log(B0*exp(omega_B(v_i(s),0)));
-    // log_B(s,0) = log(init_B(s)*exp(omega_B(v_i(s),0)));
     B(s,0) = exp(log_B(s,0));
     for (int t = 1; t < (n_t); t++) {
-      Type mean_pro = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+      Type mean_pro = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
       log_B(s,t) = log(mean_pro);
       B(s,t) = exp(log_B(s,t));
     }
     //Project 1 year ahead
-    Type mean_pro = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, (n_t - 1)) - C(s,(n_t-1))) + exp(-m(s,n_t))*gR(n_t-1)*R(s,(n_t-1)))*exp(omega_B(v_i(s),n_t));
+    Type mean_pro = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, (n_t - 1)) - C(s,(n_t-1))) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,(n_t-1)))*exp(omega_B(v_i(s),n_t));
     log_B(s,n_t) = log(mean_pro);
     B(s,n_t) = exp(log_B(s,n_t));
   }
@@ -544,7 +511,7 @@ Type sehbam(objective_function <Type>* obj) {
           }
           else {
             C(s,t-1) = Type(0.0);
-            mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+            mean_pro_B(s,t) = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
             B(s,t) = exp(log(mean_pro_B(s,t)));
             log_B(s,t) = log(B(s,t));
             counter_B(t) = counter_B(t) + (B(s,t)*area(s));
@@ -554,7 +521,7 @@ Type sehbam(objective_function <Type>* obj) {
       //Simulating 1-year projection
       for (int s = 0; s < n_s; s++){
         C(s,n_t-1) = Type(0.0);
-        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
+        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
         B(s,n_t) = mean_pro_B(s,n_t);
         log_B(s,n_t) = log(B(s,n_t));
         C(s,n_t) = 0;
@@ -580,7 +547,7 @@ Type sehbam(objective_function <Type>* obj) {
             //Simulate landings per km^2 at knot s
             C(s,t-1) = exp(log((exploitation*prop_B)/area(s)) + rnorm(Type(0.0),Type(0.2)));
             //Simulate biomass density
-            mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+            mean_pro_B(s,t) = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
             B(s,t) = exp(log(mean_pro_B(s,t)));
             log_B(s,t) = log(B(s,t));
             counter_B(t) = counter_B(t) + (B(s,t)*area(s));
@@ -595,7 +562,7 @@ Type sehbam(objective_function <Type>* obj) {
         //Simulate landings per km^2 at knot s
         C(s,n_t-1) = exp(log((exploitation*prop_B)/area(s)) + rnorm(Type(0.0),Type(0.2)));
         //Simulate biomass density
-        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
+        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
         B(s,n_t) = mean_pro_B(s,n_t);
         log_B(s,n_t) = log(B(s,n_t));
         C(s,n_t) = 0;
@@ -626,7 +593,7 @@ Type sehbam(objective_function <Type>* obj) {
             Type exploitation =  exp(log(((counter_B(t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
             if ( (B(s,t-1)*area(s)) > (counter_B(t-1)/n_s) ) C(s,t-1) = (exp(log((exploitation/area(s))*prop_B))+ rnorm(Type(0.0),Type(0.2)));
             else C(s,t-1) = Type(0.0);
-            mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+            mean_pro_B(s,t) = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
             B(s,t) = exp(log(mean_pro_B(s,t)));
             log_B(s,t) = log(B(s,t));
             counter_B(t) = counter_B(t) + (B(s,t)*area(s));
@@ -644,7 +611,7 @@ Type sehbam(objective_function <Type>* obj) {
         Type exploitation = exp(log(((counter_B(n_t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
         if ( (B(s,n_t-1)*area(s)) > (counter_B(n_t-1)/n_s) ) C(s,n_t-1) = exp(log((exploitation/area(s))*prop_B) + rnorm(Type(0.0),Type(0.2)));
         else C(s,n_t-1) = Type(0.0);
-        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
+        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
         B(s,n_t) = mean_pro_B(s,n_t);
         log_B(s,n_t) = log(B(s,n_t));
         C(s,n_t) = 0;
@@ -675,7 +642,7 @@ Type sehbam(objective_function <Type>* obj) {
             Type exploitation =  exp(log(((counter_B(t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
             if ( (B(s,t-1)*area(s)) > (counter_B(t-1)/n_s) ) C(s,t-1) = (exp(log((exploitation/area(s))*prop_B))+ rnorm(Type(0.0),Type(0.2)));
             else C(s,t-1) = B(s,t-1)*0.02*exp(rnorm(Type(0.0),Type(0.2)));
-            mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+            mean_pro_B(s,t) = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
             B(s,t) = exp(log(mean_pro_B(s,t)));
             log_B(s,t) = log(B(s,t));
             counter_B(t) = counter_B(t) + (B(s,t)*area(s));
@@ -693,7 +660,7 @@ Type sehbam(objective_function <Type>* obj) {
         Type exploitation = exp(log(((counter_B(n_t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
         if ( (B(s,n_t-1)*area(s)) > (counter_B(n_t-1)/n_s) ) C(s,n_t-1) = exp(log((exploitation/area(s))*prop_B) + rnorm(Type(0.0),Type(0.2)));
         else C(s,n_t-1)=B(s,n_t-1)*0.02*exp(rnorm(Type(0.0),Type(0.2)));
-        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
+        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
         B(s,n_t) = mean_pro_B(s,n_t);
         log_B(s,n_t) = log(B(s,n_t));
         C(s,n_t) = 0;
@@ -704,16 +671,11 @@ Type sehbam(objective_function <Type>* obj) {
     REPORT(C);
   }
 
-  // DATA_MATRIX(prop_area);
-  // PARAMETER_ARRAY(sub_B);
   //Calculating predicted biomass and recruitment over area covered by each knots
   //Commercial biomass
   for (int s = 0; s < n_s; s++){
     for (int t = 0; t < (n_t+1); t++){
       areaB(s,t) = B(s,t) * area(s);
-      // if (t < n_t){sub_B(s,t,0) = (areaB(s,t)-(sub_B(s,t,1)*prop_area(s,1))-(sub_B(s,t,2)*prop_area(s,2)))/prop_area(s,0);
-      // sub_B(s,t,1) = (areaB(s,t)-(sub_B(s,t,0)*prop_area(s,0))-(sub_B(s,t,2)*prop_area(s,2)))/prop_area(s,1);
-      // sub_B(s,t,2) = (areaB(s,t)-(sub_B(s,t,1)*prop_area(s,1))-(sub_B(s,t,0)*prop_area(s,0)))/prop_area(s,2);}
     }
   }
 
@@ -751,22 +713,21 @@ Type sehbam(objective_function <Type>* obj) {
   for (int i = 0; i < n_i; i++){
     logit_zip_I(i) = (vector<Type>(X.row((i)))*beta_I).sum();
     zip_I(i) = invlogit(logit_zip_I(i));
-    // nll_comp[5] -= dzipois(n_I(i),lambda_I,zip_I(i),true);
     nll_comp[5] -= dzinbinom2(n_I(i), mu_I, var_I, zip_I(i), true);
   }
 
   Type zero_prob_I = pow((mu_I/var_I),(sqr(mu_I)/(var_I-mu_I)));
 
-  // SIMULATE{
-  //   for (int i = 0; i < n_i; i++) {
-  //     logit_zip_I(i) = (vector<Type>(X.row((i)))*beta_I).sum();
-  //     zip_I(i) = invlogit(logit_zip_I(i));
-  //     Type berny_boi = rbinom(Type(1.0),zip_I(i));
-  //     if (berny_boi == 1) n_I(i) = Type(0.0);
-  //     else n_I(i) = rpois(lambda_I);
-  //   }
-  //   REPORT(n_I);
-  // }
+  SIMULATE{
+    for (int i = 0; i < n_i; i++) {
+      logit_zip_I(i) = (vector<Type>(X.row((i)))*beta_I).sum();
+      zip_I(i) = invlogit(logit_zip_I(i));
+      Type berny_boi = rbinom(Type(1.0),zip_I(i));
+      if (berny_boi == 1) n_I(i) = Type(0.0);
+      else n_I(i) = rnbinom2(mu_I,var_I);
+    }
+    REPORT(n_I);
+  }
 
 
   //Commercial size observations
@@ -782,21 +743,20 @@ Type sehbam(objective_function <Type>* obj) {
     // Commercial Index
     for (int i = 0; i < n_i; i++){
       if( !isNA(logI(i) )) {
-        // Type mean_B = qI*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*exp(-lambda_I));
         Type mean_B = qI*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*zero_prob_I);
-        nll_comp(4) -= keep_I(i) * prop_s_h(s_i(i),h_i(i)) * dnorm(logI(i), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
+        nll_comp(4) -= keep_I(i) * dnorm(logI(i), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
       }
     }
 
     SIMULATE{
       for (int i = 0; i < n_i; i++){
-        // Type mean_I = qI*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*exp(-lambda_I));
         Type mean_I = qI*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*zero_prob_I);
         if (n_I(i)>0) logI(i) = log(mean_I) - (sqr(sigma_epsilon)/2.0) + rnorm(Type(0.0),sigma_epsilon);
         else logI(i) = NA_REAL;
       }
       REPORT(logI);
     }
+    REPORT(log_qI);
     REPORT(qI);
     ADREPORT(qI);
   } else if (options_vec[4] == 1) {
@@ -804,10 +764,6 @@ Type sehbam(objective_function <Type>* obj) {
     vector <Type> qI(n_s); qI = exp(log_qI);
     if (options_vec[1] == 1){
       DATA_VECTOR(prior_pars);
-      // for (int s = 0; s < n_s; s++){
-      //   nll_comp[8] -= dbeta(qI(s),prior_pars[0],prior_pars[1],true);
-      // }
-      // DATA_VECTOR(prior_pars);
       DATA_VECTOR(h_s);//Indicator for dominant benthoscape in knot
       for (int s = 0; s < n_s; s++){
         if (h_s(s)==0) nll_comp[8] -= dbeta(qI(s),prior_pars[0],prior_pars[1],true);
@@ -819,21 +775,20 @@ Type sehbam(objective_function <Type>* obj) {
     // Commercial Index
     for (int i = 0; i < n_i; i++){
       if( !isNA(logI(i) )) {
-        // Type mean_B = qI(s_i(i))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*exp(-lambda_I));
         Type mean_B = qI(s_i(i))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*zero_prob_I);
-        nll_comp(4) -= keep_I(i) * prop_s_h(s_i(i),h_i(i)) * dnorm(logI(i), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
+        nll_comp(4) -= keep_I(i) * dnorm(logI(i), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
       }
     }
 
     SIMULATE{
       for (int i = 0; i < n_i; i++){
-        // Type mean_I = qI(s_i(i))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*exp(-lambda_I));
         Type mean_I = qI(s_i(i))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*zero_prob_I);
         if (n_I(i)>0) logI(i) = log(mean_I) - (sqr(sigma_epsilon)/2.0) + rnorm(Type(0.0),sigma_epsilon);
         else logI(i) = NA_REAL;
       }
       REPORT(logI);
     }
+    REPORT(log_qI);
     REPORT(qI);
     ADREPORT(qI);
   } else if (options_vec[4] == 2) {
@@ -848,95 +803,54 @@ Type sehbam(objective_function <Type>* obj) {
       }
     }
 
-    PARAMETER_VECTOR(omega_q);
-
-    if (options_vec[5]==1){
-
-      PARAMETER(log_kappa_q);
-      PARAMETER(log_tau_q);
-
-      Type kappa_q = exp(log_kappa_q);
-      Type tau_q = exp(log_tau_q);
-
-      DATA_STRUCT(mesh_obj,spde_aniso_t);
-
-      PARAMETER_VECTOR(log_H_input_q); //mortality anisotropy parameters
-
-      //mortality anisotropy matrix
-      matrix<Type> H_q(2,2); H_q = create_H(log_H_input_q);
-
-      //Set up GMRF for mortality
-      SparseMatrix <Type> Q_q = Q_spde(mesh_obj, kappa_q, H_q);
-      nll_comp(13) += SCALE(GMRF(Q_q),1/tau_q)(omega_q);
-
-    }
-
-    REPORT(omega_q);
-
     // Commercial Index
     for (int i = 0; i < n_i; i++){
       if( !isNA(logI(i) )) {
-        // Type dens_qI = qI(h_i(i))*pow(log_B(s_i(i),t_i(i)),beta_dens_I);
-        // Type mean_B = qI(h_i(i))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*exp(-lambda_I));
-        Type mean_B = (qI(h_i(i))*exp(omega_q(v_i(s_i(i)))))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*zero_prob_I);
-        // nll_comp(4) -= keep_I(i) * prop_s_h(s_i(i),h_i(i)) * dnorm(logI(i), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
-        nll_comp(4) -= keep_I(i) * prop_s_h(s_i(i),h_i(i)) * dnorm(logI(i), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
+        Type mean_B = qI(h_i(i))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*zero_prob_I);
+        nll_comp(4) -= keep_I(i) * dnorm(logI(i), log (mean_B)- sqr(sigma_epsilon)/Type(2.0), sigma_epsilon, true);
       }
     }
 
     SIMULATE{
       for (int i = 0; i < n_i; i++){
-        // Type mean_I = qI(h_i(i))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*exp(-lambda_I));
         Type mean_I = qI(h_i(i))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*zero_prob_I);
         if (n_I(i)>0) logI(i) = log(mean_I) - (sqr(sigma_epsilon)/2.0) + rnorm(Type(0.0),sigma_epsilon);
         else logI(i) = NA_REAL;
       }
       REPORT(logI);
     }
+    REPORT(log_qI);
     REPORT(qI);
     ADREPORT(qI);
   }
 
   //Probability of capturing recruits
   for (int i = 0; i < n_i; i++){
-    // logit_zip_IR(i) = (vector<Type>(X.row((i)))*beta_IR).sum();
-    // zip_IR(i) = invlogit(logit_zip_IR(i));
-    // nll_comp[11] -= dzipois(n_IR(i),lambda_IR,zip_IR(i),true);
-    // nll_comp[11] -= dzinbinom2(n_IR(i), mu_IR, var_IR, zip_IR(i), true);
     nll_comp[11] -= dnbinom2(n_IR(i), mu_IR(h_i(i)), var_IR(h_i(i)), true);
   }
+
   vector <Type> zero_prob_IR(n_h);
   for (int h = 0; h < n_h; h++){
     zero_prob_IR(h) = pow((mu_IR(h)/var_IR(h)),(sqr(mu_IR(h))/(var_IR(h)-mu_IR(h))));
   }
-  // zero_prob_IR = pow((mu_IR/var_IR),(sqr(mu_IR)/(var_IR-mu_IR)));
 
-  // SIMULATE {
-  //   for (int i = 0; i < n_i; i++) {
-  //     logit_zip_IR(i) = (vector<Type>(X.row((i)))*beta_IR).sum();
-  //     zip_IR(i) = invlogit(logit_zip_IR(i));
-  //     Type berny_boi2 = rbinom(Type(1.0),zip_IR(i));
-  //     if (berny_boi2 == 1) n_IR(i) = Type(0.0);
-  //     else n_IR(i) = rpois(lambda_IR);
-  //   }
-  //   REPORT(n_IR);
-  // }
+  SIMULATE {
+    for (int i = 0; i < n_i; i++) {
+       n_IR(i) = rnbinom2(mu_IR(h_i(i)), var_IR(h_i(i)));
+    }
+    REPORT(n_IR);
+  }
 
   // Recruit Index
   for (int i = 0; i < n_i; i++){
     if ( !isNA(logIR(i) )) {
-      // Type dens_qR = qR(h_i(i))+exp(beta_dens_IR*log_R(s_i(i),t_i(i)));
-      // Type mean_R = qR(h_i(i))*R(s_i(i),t_i(i))/(1-zip_IR(h_i(i))+(1-zip_IR(h_i(i)))*exp(-lambda_IR));
-      // Type mean_R = qR(h_i(i))*R(s_i(i),t_i(i))/(1-zip_IR(h_i(i))+(1-zip_IR(h_i(i)))*zero_prob_IR);
       Type mean_R = qR(h_i(i))*R(s_i(i),t_i(i))/(1-zero_prob_IR(h_i(i)));
-      nll_comp(6) -= keep_IR(i) * prop_s_h(s_i(i),h_i(i)) * dnorm(logIR(i), log(mean_R)-sqr(sigma_upsilon)/Type(2.0), sigma_upsilon, true);
+      nll_comp(6) -= keep_IR(i) * dnorm(logIR(i), log(mean_R)-sqr(sigma_upsilon)/Type(2.0), sigma_upsilon, true);
     }
   }
 
   SIMULATE{
     for (int i = 0; i < n_i; i++){
-      // Type mean_IR = qR(h_i(i))*R(s_i(i),t_i(i))/(1-zip_IR(h_i(i))+(1-zip_IR(h_i(i)))*exp(-lambda_IR));
-      // Type mean_IR = qR(h_i(i))*R(s_i(i),t_i(i))/(1-zip_IR(h_i(i))+(1-zip_IR(h_i(i)))*zero_prob_IR);
       Type mean_IR = qR(h_i(i))*R(s_i(i),t_i(i))/(1-zero_prob_IR(h_i(i)));
       if(n_IR(i)>0) logIR(i) = log(mean_IR) - (sqr(sigma_upsilon)/2.0) + rnorm(Type(0.0),sigma_upsilon);
       else logIR(i) = NA_REAL;
@@ -957,7 +871,7 @@ Type sehbam(objective_function <Type>* obj) {
     // Observations to natural mortality
     for (int i = 0; i < n_i; i++){
       if (!isNA(L(i))) {
-        nll_comp(7) -= keep_L(i) * prop_s_h(s_i(i),h_i(i)) * dbinom_robust(L(i), n_bin(i),logit(m(s_i(i),t_i(i))*S(h_i(i))),true);
+        nll_comp(7) -= keep_L(i) * dbinom_robust(L(i), n_bin(i),logit(m(s_i(i),t_i(i))*S(h_i(i))),true);
       }
     }
 
@@ -977,35 +891,28 @@ Type sehbam(objective_function <Type>* obj) {
   // ADREPORT all individual parameters to get their standard errors
   REPORT(sigma_epsilon);
   REPORT(sigma_upsilon);
-  // REPORT(R0);
+  REPORT(R0);
   REPORT(B0);
   REPORT(m0);
   REPORT(qR);
-  // REPORT(lambda_I);
-  // REPORT(lambda_IR);
   REPORT(mu_I);
   REPORT(mu_IR);
   REPORT(var_I);
   REPORT(var_IR);
   REPORT(beta_I);
-  // REPORT(beta_IR);
   REPORT(zip_I);
-  // ADREPORT(zip_I);
-  // REPORT(zip_IR);
+  ADREPORT(zip_I);
   ADREPORT(sigma_epsilon);
   ADREPORT(sigma_upsilon);
-  // ADREPORT(R0);
+  ADREPORT(R0);
   ADREPORT(B0);
   ADREPORT(m0);
   ADREPORT(qR);
-  // ADREPORT(lambda_I);
-  // ADREPORT(lambda_IR);
   ADREPORT(mu_I);
   ADREPORT(mu_IR);
   ADREPORT(var_I);
   ADREPORT(var_IR);
   ADREPORT(beta_I);
-  // ADREPORT(beta_IR);
 
   //Reporting processes
   REPORT(B);
@@ -1024,7 +931,6 @@ Type sehbam(objective_function <Type>* obj) {
   REPORT(m);
   REPORT(mean_m);
   ADREPORT(mean_m);
-  // REPORT(sub_B);
 
   if (options_vec[2] == 1){
     ADREPORT(R);

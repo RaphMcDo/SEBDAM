@@ -275,7 +275,7 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
     temp_par_list$log_sigma_upsilon<--1
     temp_par_list$log_R0<-mean(log(exp(temp_data_list$logIR)*10),na.rm=T)
     temp_par_list$log_B0<-mean(log(exp(temp_data_list$logI)*10),na.rm=T)
-    temp_par_list$log_m0<-log(0.1)
+    temp_par_list$log_m0<-log(fix_m)
     temp_par_list$logit_p_I<-logit(0.5)
     temp_par_list$logit_p_IR<-logit(0.5)
     temp_par_list$log_qR<--1
@@ -339,8 +339,8 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
       temp_data_list$L<-temp_L
       temp_data_list$n_bin<-temp_bin
       temp_par_list$log_S<--1
-    } else if (obs_mort == FALSE) temp_map<-list(log_m0=as.factor(NA))
-    if (separate_R_aniso==FALSE) temp_map$log_H_input_R<-as.factor(c(NA,NA))
+    } else if (obs_mort == FALSE) temp_map$log_m0<-as.factor(NA)
+    if (spat_approach == "spde_aniso" & separate_R_aniso==FALSE) temp_map$log_H_input_R<-as.factor(c(NA,NA))
 
     tmb_obj<-list(data=temp_data_list,par=temp_par_list,random=temp_random,map=temp_map)
 

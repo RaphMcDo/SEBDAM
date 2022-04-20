@@ -24,17 +24,32 @@ fit_model<-function(tmb_obj,optim="optimr",
   #Create object
   obj<-TMB::MakeADFun(data=tmb_obj$data,parameters=tmb_obj$par,random=tmb_obj$random,map=tmb_obj$map,DLL="SEBDAM",silent=silent)
 
+  non_r<-names(tmb_obj$par)[-which(names(tmb_obj$par) %in% tmb_obj$random)]
+
   if (!(optim %in% c("nlminb","optimr","parallel"))) stop("Incorrect optimizer specification, options: nlminb, optimr, parallel (last does not work on Windows currently)")
 
   if (optim == "nlminb") {
     Opt<-try(stats::nlminb(start=obj$par,obj=obj$fn,gr=obj$gr,
                 control=control),T)
+    if (Opt$message=="iteration limit reached without convergence (10)") {
+      obj$par<-obj$env$last.par[which(names(obj$env$last.par) %in% non_r)]
+      Opt<-try(stats::nlminb(start=obj$par,obj=obj$fn,gr=obj$gr,
+                             control=control),T)
+    }
   } else if (optim == "optimr") {
-    Opt<-optimx::optimr(obj$par,obj$fn,obj$gr,control=control,method=optim_method)
+    Opt<-try(optimx::optimr(obj$par,obj$fn,obj$gr,control=control,method=optim_method),T)
+    if (Opt$message=="iteration limit reached without convergence (10)") {
+      obj$par<-obj$env$last.par[which(names(obj$env$last.par) %in% non_r)]
+      Opt <- try(Opt<-optimx::optimr(obj$par,obj$fn,obj$gr,control=control,method=optim_method),T)
+    }
   } else if(optim == "parallel"){
     cl <- parallel::makeCluster(cores,type="FORK")
     parallel::setDefaultCluster(cl=cl)
-    Opt = optimParallel::optimParallel(obj$par,obj$fn,obj$gr,control=control)
+    Opt = try(optimParallel::optimParallel(obj$par,obj$fn,obj$gr,control=control),T)
+    if (Opt$message=="iteration limit reached without convergence (10)") {
+      obj$par<-obj$env$last.par[which(names(obj$env$last.par) %in% non_r)]
+      Opt <- Opt = try(optimParallel::optimParallel(obj$par,obj$fn,obj$gr,control=control),T)
+    }
     parallel::setDefaultCluster(cl=NULL)
     parallel::stopCluster(cl)
   }
