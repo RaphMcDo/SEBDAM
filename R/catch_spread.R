@@ -2,15 +2,14 @@
 #'
 #' @param catch sf object with columns Catch, Year, geometry
 #' @param knots kmeans object obtained from setup_mesh function
-#' @param area sf object: modelling area, obtained with setup_pred_grid
-#' #' @param stratarea area covered by each knot as obtained from setup_pred_grid function
+#' @param stratarea area covered by each knot as obtained from setup_pred_grid function
 #' @param crs_input Desired crs, currently only UTM is accepted
 #'
 #' @return List containing properly formatted catch, either sums per at each knot or density (catch/km^2) at each knot
 #' @export
 #'
 #' @examples
-catch_spread<-function(catch=NULL,knots=NULL,area=NULL,stratarea=NULL,crs_input=NULL) {
+catch_spread<-function(catch=NULL,knots=NULL,stratarea=NULL,crs_input=NULL) {
 
   if (!("sf" %in% attr(catch,"class")) | !("kmeans" %in% attr(knots,"class")) | !all(colnames(catch) %in% c("Catch","Year","geometry"))) {
     stop("Either catch or knots are wrong formats")
@@ -27,7 +26,7 @@ catch_spread<-function(catch=NULL,knots=NULL,area=NULL,stratarea=NULL,crs_input=
   }
   utm_catch<-sf::st_transform(wgs_catch,crs=crs_change)
 
-  temp_knots<-as.data.frame(knots[[2]])
+  temp_knots<-as.data.frame(knots[[2]]*1000)
   colnames(temp_knots)<-c("x","y")
   knots_sf<- sf::st_as_sf(temp_knots,coords=c("x","y"),crs=sf::st_crs(utm_catch))
 
@@ -45,17 +44,18 @@ catch_spread<-function(catch=NULL,knots=NULL,area=NULL,stratarea=NULL,crs_input=
 
   catch_frame<-data.frame("knotID"=c(1:length(unique(polyknotID))))
   for (i in min(utm_catch$Year):max(utm_catch$Year)){
+    #Add a check in case that year doesn't exist, and if it doesn't then make it 0
     catchtemp <-subset(agcatch,Year==i)
     catchtemp <-catchtemp[,-1]
     catch_frame<-dplyr::left_join(catch_frame,catchtemp,by="knotID")
   }
-  colnames(catch_frame)<-c("knotID",paste(1:max(utm_catch$Year)))
+  colnames(catch_frame)<-c("knotID",paste(min(utm_catch$Year):max(utm_catch$Year)))
   #Change empty entries to 0, cause 0 catches there that year
   catch_frame[is.na(catch_frame)]<-0
 
   sum_catches<-catch_frame
   density_catches<-catch_frame/stratarea$area
-  density_catches[,1]<-density_catches[,1]/stratarea$area
+  density_catches<-density_catches[,-1]
 
   listy<-list(sum_catches=sum_catches,density_catches=density_catches)
   return(listy)
