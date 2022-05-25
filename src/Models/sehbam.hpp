@@ -11,7 +11,7 @@ Type sehbam(objective_function <Type>* obj) {
 
   DATA_IVECTOR(options_vec); //Vector of multiple choices
   //Slot 0: Choice of simulated landings
-  //  0 (default)= No landings
+  //  0 (default)= No landing s
   //  1 = Proportionally distributed at every knot
   //  2 = Proportionally distributed at knots with above average biomass
   //  3 = Proportionally distributed at knots with above average biomass with extra landings at other knots
@@ -299,6 +299,7 @@ Type sehbam(objective_function <Type>* obj) {
       for (int t = 0; t < (n_t+1); t++){
         vector <Type> temp_omega(n_m);
         gmrf1.simulate(temp_omega);
+
         omega_B.col(t)=temp_omega;
       }
       REPORT(Q_B);
@@ -717,6 +718,7 @@ Type sehbam(objective_function <Type>* obj) {
   }
 
   Type zero_prob_I = pow((mu_I/var_I),(sqr(mu_I)/(var_I-mu_I)));
+  REPORT(zero_prob_I);
 
   SIMULATE{
     for (int i = 0; i < n_i; i++) {
@@ -763,12 +765,10 @@ Type sehbam(objective_function <Type>* obj) {
     PARAMETER_VECTOR(log_qI); //commercial biomass catchabilities
     vector <Type> qI(n_s); qI = exp(log_qI);
     if (options_vec[1] == 1){
-      DATA_VECTOR(prior_pars);
-      DATA_VECTOR(h_s);//Indicator for dominant benthoscape in knot
+      DATA_VECTOR(prior_pars_1);
+      DATA_VECTOR(prior_pars_2);
       for (int s = 0; s < n_s; s++){
-        if (h_s(s)==0) nll_comp[8] -= dbeta(qI(s),prior_pars[0],prior_pars[1],true);
-        if (h_s(s)==1) nll_comp[8] -= dbeta(qI(s),prior_pars[2],prior_pars[3],true);
-        if (h_s(s)==2) nll_comp[8] -= dbeta(qI(s),prior_pars[4],prior_pars[5],true);
+        nll_comp[8] -= dbeta(qI(s),prior_pars_1[s],prior_pars_2[s],true);
       }
     }
 
@@ -781,6 +781,7 @@ Type sehbam(objective_function <Type>* obj) {
     }
 
     SIMULATE{
+
       for (int i = 0; i < n_i; i++){
         Type mean_I = qI(s_i(i))*B(s_i(i),t_i(i))/(1-zip_I(h_i(i))+(1-zip_I(h_i(i)))*zero_prob_I);
         if (n_I(i)>0) logI(i) = log(mean_I) - (sqr(sigma_epsilon)/2.0) + rnorm(Type(0.0),sigma_epsilon);
@@ -797,9 +798,7 @@ Type sehbam(objective_function <Type>* obj) {
     if (options_vec[1] == 1){
       DATA_VECTOR(prior_pars);
       for (int h = 0; h < n_h; h++){
-        if (h==0) nll_comp[8] -= dbeta(qI(h),prior_pars[0],prior_pars[1],true);
-        if (h==1) nll_comp[8] -= dbeta(qI(h),prior_pars[2],prior_pars[3],true);
-        if (h==2) nll_comp[8] -= dbeta(qI(h),prior_pars[4],prior_pars[5],true);
+        nll_comp[8] -= dbeta(qI(h),prior_pars[(h*2)],prior_pars[(h*2)+1],true);
       }
     }
 
@@ -829,17 +828,18 @@ Type sehbam(objective_function <Type>* obj) {
     nll_comp[11] -= dnbinom2(n_IR(i), mu_IR(h_i(i)), var_IR(h_i(i)), true);
   }
 
+  SIMULATE {
+    for (int i = 0; i < n_i; i++) {
+      n_IR(i) = rnbinom2(mu_IR(h_i(i)), var_IR(h_i(i)));
+    }
+    REPORT(n_IR);
+  }
+
   vector <Type> zero_prob_IR(n_h);
   for (int h = 0; h < n_h; h++){
     zero_prob_IR(h) = pow((mu_IR(h)/var_IR(h)),(sqr(mu_IR(h))/(var_IR(h)-mu_IR(h))));
   }
-
-  SIMULATE {
-    for (int i = 0; i < n_i; i++) {
-       n_IR(i) = rnbinom2(mu_IR(h_i(i)), var_IR(h_i(i)));
-    }
-    REPORT(n_IR);
-  }
+  REPORT(zero_prob_IR);
 
   // Recruit Index
   for (int i = 0; i < n_i; i++){
@@ -877,7 +877,7 @@ Type sehbam(objective_function <Type>* obj) {
 
     SIMULATE {
       for (int i = 0; i < n_i; i++){
-        n_bin(i) = rpois(Type(100));
+        n_bin(i) = rpois(Type(400));
         L(i) = rbinom(n_bin(i), m(s_i(i),t_i(i))*S(h_i(i)));
       }
       REPORT(L);
