@@ -243,7 +243,7 @@ Type sehbam(objective_function <Type>* obj) {
     REPORT(tau_B);
     REPORT(kappa_R);
     REPORT(tau_R);
-    //DREPORT derived parameters for SPDE approach
+    //REPORT derived parameters for SPDE approach
     REPORT(SigmaO_B);
     REPORT(SigmaO_R);
     REPORT(Range_B);
@@ -252,7 +252,7 @@ Type sehbam(objective_function <Type>* obj) {
     ADREPORT(tau_B);
     ADREPORT(kappa_R);
     ADREPORT(tau_R);
-    //DREPORT derived parameters for SPDE approach
+    //ADREPORT derived parameters for SPDE approach to get SEs
     ADREPORT(SigmaO_B);
     ADREPORT(SigmaO_R);
     ADREPORT(Range_B);
@@ -694,6 +694,7 @@ Type sehbam(objective_function <Type>* obj) {
     }
     mean_m(t) = mean_m(t) / n_s;
   }
+  vector <Type> log_mean_m = log(mean_m);
 
   //Divide by 1000 to represent metric tonnes
   for (int t = 0; t < (n_t+1); t++){
@@ -701,12 +702,14 @@ Type sehbam(objective_function <Type>* obj) {
       totB(t) = totB(t) + (areaB(s,t)/1000);
     }
   }
+  vector <Type> log_totB = log(totB);
 
   for (int t = 0; t < (n_t); t++){
     for (int s = 0; s < n_s; s++){
       totR(t) = totR(t)+(areaR(s,t)/1000);
     }
   }
+  vector <Type> log_totR = log(totR);
 
   // Observation equations
 
@@ -719,6 +722,17 @@ Type sehbam(objective_function <Type>* obj) {
 
   Type zero_prob_I = pow((mu_I/var_I),(sqr(mu_I)/(var_I-mu_I)));
   REPORT(zero_prob_I);
+
+  vector <Type> report_prob_I(n_h); report_prob_I.setZero();
+  for (int h = 0; h < n_h; h++){
+    for (int i = 0; i < n_i; i++){
+      if (h_i(i)==h){
+        report_prob_I(h) = (1-zip_I(i) +(1-zip_I(i))*zero_prob_I);
+        if (report_prob_I(h) > 0) break;
+      }
+    }
+  }
+  ADREPORT(report_prob_I);
 
   SIMULATE{
     for (int i = 0; i < n_i; i++) {
@@ -841,6 +855,12 @@ Type sehbam(objective_function <Type>* obj) {
   }
   REPORT(zero_prob_IR);
 
+  vector <Type> report_prob_IR(n_h);
+  for (int h = 0; h < n_h; h++){
+    report_prob_IR(h) = 1-zero_prob_IR(h);
+  }
+  ADREPORT(report_prob_IR);
+
   // Recruit Index
   for (int i = 0; i < n_i; i++){
     if ( !isNA(logIR(i) )) {
@@ -931,6 +951,13 @@ Type sehbam(objective_function <Type>* obj) {
   REPORT(m);
   REPORT(mean_m);
   ADREPORT(mean_m);
+
+  REPORT(log_totB);
+  REPORT(log_totR);
+  REPORT(log_mean_m);
+  ADREPORT(log_totB);
+  ADREPORT(log_totR);
+  ADREPORT(log_mean_m);
 
   if (options_vec[2] == 1){
     ADREPORT(R);

@@ -21,9 +21,9 @@
 #' @export
 #'
 #' @examples
-data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL, bound=NULL,
+data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL, bound=NULL,
                      obs_mort=FALSE, prior=FALSE, prior_pars=c(10,12), fix_m=0.1,
-                     mult_qI=FALSE, spat_approach=NULL, knot_obj=NULL,
+                     mult_qI=FALSE, s_a=NULL, spat_approach=NULL, knot_obj=NULL,
                      knot_area=NULL,separate_R_aniso=T,all_se=F) {
 
   #Data tables do not always work the same way as data.frames, so ensure they are data.frames
@@ -60,6 +60,10 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
 
     if (!is.numeric(catch) & !(length(catch) %in% c(length(unique(data$Year)),length(unique(data$Year))+1))) {
       stop("Catch is either not a vector or has a different length than data")
+    }
+
+    if (ncol(growths)!=2 | !(any(colnames(growths) %in% c("g"))) | !(any(colnames(growths) %in% c("gR")))){
+      stop("Issue with growths data frame, needs to have 2 columns with names g and gR")
     }
 
     temp_data_list<-list()
@@ -265,8 +269,18 @@ data_setup<-function(data=NULL, growths=NULL , catch=NULL, model=NULL, mesh=NULL
     temp_data_list$t_i<-(data$Year-min(data$Year))
     temp_data_list$v_i<-mesh$idx$loc-1
 
-    temp_data_list$gI<-growths$g
-    temp_data_list$gR<-growths$gR
+    if (is.data.frame(growths)){
+      temp_data_list$gI<-as.matrix(growths$g,ncol=1)
+      temp_data_list$gR<-as.matrix(growths$gR,ncol=1)
+      temp_data_list$s_a<-rep(0,temp_data_list$n_s)
+    } else if (is.list(growths) & (nrow(growths$gI)==nrow(growths$gR)) & (ncol(growths$gI)>=temp_data_list$n_t) & (ncol(growths$gR)>=temp_data_list$n_t)){
+      if (length(s_a)!=temp_data_list$n_s){
+        stop("Issue with s_a")
+      }
+      temp_data_list$gI<-as.matrix(growths$gI)
+      temp_data_list$gR<-as.matrix(growths$gR)
+      temp_data_list$s_a<-s_a
+    } else (stop("Issue with growth data"))
 
     temp_data_list$plug_exploit<-0.1
 

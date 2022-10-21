@@ -313,6 +313,12 @@ Type tlm(objective_function <Type>* obj) {
   REPORT(B);
   ADREPORT(R);
   REPORT(R);
+  REPORT(log_B);
+  REPORT(log_R);
+  REPORT(log_m);
+  ADREPORT(log_B);
+  ADREPORT(log_R);
+  ADREPORT(log_m);
 
   Type nll = nll_comp.sum();
   return nll;
