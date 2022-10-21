@@ -58,10 +58,11 @@ Type sebdam(objective_function <Type>* obj) {
   DATA_FACTOR(s_i); //Indexing for knot (dim n_i)
   DATA_FACTOR(t_i); //Indexing for year (dim n_i)
   DATA_FACTOR(v_i); //Indexing for specific mesh location to match knots with right vertex (dim n_m)
+  DATA_FACTOR(s_a); //Indexing knot for area for growth rates
 
   //Fixed covariates
-  DATA_VECTOR(gI); //commercial biomass growth
-  DATA_VECTOR(gR); //recruitment growth
+  DATA_MATRIX(gI); //commercial biomass growth
+  DATA_MATRIX(gR); //recruitment growth
 
   DATA_SCALAR(plug_exploit); //Desired exploitation rate for simulations, not used when fitting data
 
@@ -483,12 +484,12 @@ Type sebdam(objective_function <Type>* obj) {
     log_B(s,0) = log(B0*exp(omega_B(v_i(s),0)));
     B(s,0) = exp(log_B(s,0));
     for (int t = 1; t < (n_t); t++) {
-      Type mean_pro = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+      Type mean_pro = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
       log_B(s,t) = log(mean_pro);
       B(s,t) = exp(log_B(s,t));
     }
     //Project 1 year ahead
-    Type mean_pro = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, (n_t - 1)) - C(s,(n_t-1))) + exp(-m(s,n_t))*gR(n_t-1)*R(s,(n_t-1)))*exp(omega_B(v_i(s),n_t));
+    Type mean_pro = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, (n_t - 1)) - C(s,(n_t-1))) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,(n_t-1)))*exp(omega_B(v_i(s),n_t));
     log_B(s,n_t) = log(mean_pro);
     B(s,n_t) = exp(log_B(s,n_t));
   }
@@ -508,7 +509,7 @@ Type sebdam(objective_function <Type>* obj) {
           }
           else {
             C(s,t-1) = Type(0.0);
-            mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+            mean_pro_B(s,t) = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
             B(s,t) = exp(log(mean_pro_B(s,t)));
             log_B(s,t) = log(B(s,t));
             counter_B(t) = counter_B(t) + (B(s,t)*area(s));
@@ -518,7 +519,7 @@ Type sebdam(objective_function <Type>* obj) {
       //Simulating 1-year projection
       for (int s = 0; s < n_s; s++){
         C(s,n_t-1) = Type(0.0);
-        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
+        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
         B(s,n_t) = mean_pro_B(s,n_t);
         log_B(s,n_t) = log(B(s,n_t));
         C(s,n_t) = 0;
@@ -543,7 +544,7 @@ Type sebdam(objective_function <Type>* obj) {
             //Simulate landings per km^2 at knot s
             C(s,t-1) = exp(log((exploitation*prop_B)/area(s)) + rnorm(Type(0.0),Type(0.2)));
             //Simulate biomass density
-            mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+            mean_pro_B(s,t) = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
             B(s,t) = exp(log(mean_pro_B(s,t)));
             log_B(s,t) = log(B(s,t));
             counter_B(t) = counter_B(t) + (B(s,t)*area(s));
@@ -558,7 +559,7 @@ Type sebdam(objective_function <Type>* obj) {
         //Simulate landings per km^2 at knot s
         C(s,n_t-1) = exp(log((exploitation*prop_B)/area(s)) + rnorm(Type(0.0),Type(0.2)));
         //Simulate biomass density
-        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
+        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
         B(s,n_t) = mean_pro_B(s,n_t);
         log_B(s,n_t) = log(B(s,n_t));
         C(s,n_t) = 0;
@@ -588,7 +589,7 @@ Type sebdam(objective_function <Type>* obj) {
             Type exploitation =  exp(log(((counter_B(t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
             if ( (B(s,t-1)*area(s)) > (counter_B(t-1)/n_s) ) C(s,t-1) = (exp(log((exploitation/area(s))*prop_B))+ rnorm(Type(0.0),Type(0.2)));
             else C(s,t-1) = Type(0.0);
-            mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+            mean_pro_B(s,t) = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
             B(s,t) = exp(log(mean_pro_B(s,t)));
             log_B(s,t) = log(B(s,t));
             counter_B(t) = counter_B(t) + (B(s,t)*area(s));
@@ -606,7 +607,7 @@ Type sebdam(objective_function <Type>* obj) {
         Type exploitation = exp(log(((counter_B(n_t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
         if ( (B(s,n_t-1)*area(s)) > (counter_B(n_t-1)/n_s) ) C(s,n_t-1) = exp(log((exploitation/area(s))*prop_B) + rnorm(Type(0.0),Type(0.2)));
         else C(s,n_t-1) = Type(0.0);
-        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
+        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
         B(s,n_t) = mean_pro_B(s,n_t);
         log_B(s,n_t) = log(B(s,n_t));
         C(s,n_t) = 0;
@@ -636,7 +637,7 @@ Type sebdam(objective_function <Type>* obj) {
             Type exploitation =  exp(log(((counter_B(t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
             if ( (B(s,t-1)*area(s)) > (counter_B(t-1)/n_s) ) C(s,t-1) = (exp(log((exploitation/area(s))*prop_B))+ rnorm(Type(0.0),Type(0.2)));
             else C(s,t-1) = B(s,t-1)*0.02*exp(rnorm(Type(0.0),Type(0.2)));
-            mean_pro_B(s,t) = (exp(-m(s,t))*gI(t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
+            mean_pro_B(s,t) = (exp(-m(s,t))*gI(s_a(s),t-1)*(B(s, t - 1) - C(s,t-1)) + exp(-m(s,t))*gR(s_a(s),t-1)*R(s,t-1))*exp(omega_B(v_i(s),t));
             B(s,t) = exp(log(mean_pro_B(s,t)));
             log_B(s,t) = log(B(s,t));
             counter_B(t) = counter_B(t) + (B(s,t)*area(s));
@@ -654,7 +655,7 @@ Type sebdam(objective_function <Type>* obj) {
         Type exploitation = exp(log(((counter_B(n_t-1)/1000)*plug_exploit)))*exp(rnorm(Type(0.0),Type(0.2)))*1000;
         if ( (B(s,n_t-1)*area(s)) > (counter_B(n_t-1)/n_s) ) C(s,n_t-1) = exp(log((exploitation/area(s))*prop_B) + rnorm(Type(0.0),Type(0.2)));
         else C(s,n_t-1)=B(s,n_t-1)*0.02*exp(rnorm(Type(0.0),Type(0.2)));
-        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
+        mean_pro_B(s,n_t) = (exp(-m(s,n_t))*gI(s_a(s),n_t-1)*(B(s, n_t - 1) - C(s,n_t-1)) + exp(-m(s,n_t))*gR(s_a(s),n_t-1)*R(s,n_t-1))*exp(omega_B(v_i(s),n_t));
         B(s,n_t) = mean_pro_B(s,n_t);
         log_B(s,n_t) = log(B(s,n_t));
         C(s,n_t) = 0;
@@ -688,6 +689,7 @@ Type sebdam(objective_function <Type>* obj) {
     }
     mean_m(t) = mean_m(t) / n_s;
   }
+  vector <Type> log_mean_m = log(mean_m);
 
   //Divide by 1000 to represent metric tonnes
   for (int t = 0; t < (n_t+1); t++){
@@ -695,12 +697,14 @@ Type sebdam(objective_function <Type>* obj) {
       totB(t) = totB(t) + (areaB(s,t)/1000);
     }
   }
+  vector <Type> log_totB = log(totB);
 
   for (int t = 0; t < (n_t); t++){
     for (int s = 0; s < n_s; s++){
       totR(t) = totR(t)+(areaR(s,t)/1000);
     }
   }
+  vector <Type> log_totR = log(totR);
 
   // Observation equations
 
@@ -875,6 +879,13 @@ Type sebdam(objective_function <Type>* obj) {
   REPORT(m);
   REPORT(mean_m);
   ADREPORT(mean_m);
+
+  REPORT(log_totB);
+  REPORT(log_totR);
+  REPORT(log_mean_m);
+  ADREPORT(log_totB);
+  ADREPORT(log_totR);
+  ADREPORT(log_mean_m);
 
   if (options_vec[2] == 1){
     ADREPORT(R);

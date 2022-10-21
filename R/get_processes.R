@@ -22,11 +22,25 @@ get_processes<-function(return_obj) {
 
     proc_frame<-data.frame(B=B,se_B=se_B,R=R,se_R=se_R,m=m,se_m=se_m)
 
-    listy<-list(processes=proc_frame)
+    log_B<-return_obj$report$log_B
+    se_log_B<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_B")])
+
+    log_R<-return_obj$report$log_R
+    se_log_R<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_R")])
+
+    log_m<-return_obj$report$log_m
+    if (return_obj$obj$env$data$options_vec[2]==1) se_log_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_m")])
+    else se_log_m<-rep(NA,length(log_m))
+
+    log_proc_frame<-data.frame(log_B=log_B,se_log_B=se_log_B,
+                               log_R=log_R,se_log_R=se_log_R,
+                               log_m=log_m,se_log_m=se_log_m)
+
+    listy<-list(processes=proc_frame,log_processes=log_proc_frame)
 
   } else if (return_obj$obj$env$data$model == "SEBDAM"){
 
-    if (return_obj$obj$env$data$options_vec[3]!=1) warning("Standard errors for processes were not calculated as part of fitting process, if desired please rerun data_setup() with all_se=T")
+    if (return_obj$obj$env$data$options_vec[3]!=1) warning("Standard errors for density processes were not calculated as part of fitting process, if desired please rerun data_setup() with all_se=T")
 
     #Obtaining density processes
     B<-return_obj$report$B
@@ -61,7 +75,22 @@ get_processes<-function(return_obj) {
 
     tot_frame<-data.frame(totB=totB,se_totB=se_totB,totR=totR,se_totR=se_totR,mean_m=mean_m,se_mean_m=se_mean_m)
 
-    listy<-list(densities=dens_list,totals=tot_frame)
+    log_totB<-return_obj$report$log_totB
+    se_log_totB<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_totB")])
+
+    log_totR<-return_obj$report$log_totR
+    log_totR<-c(log_totR,NA)
+    se_log_totR<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_totR")])
+    se_log_totR<-c(se_log_totR,NA)
+
+    log_mean_m<-return_obj$report$log_mean_m
+    se_log_mean_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_mean_m")])
+
+    log_tot_frame<-data.frame(log_totB=log_totB,se_log_totB=se_log_totB,
+                              log_totR=log_totR,se_log_totR=se_log_totR,
+                              log_mean_m=log_mean_m,se_log_mean_m=se_log_mean_m)
+
+    listy<-list(densities=dens_list,totals=tot_frame,log_tot_frame=log_tot_frame)
   }
 
   return(listy)

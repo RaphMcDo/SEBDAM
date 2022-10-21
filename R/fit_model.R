@@ -40,7 +40,7 @@ fit_model<-function(tmb_obj,optim="optimr",
     Opt<-try(optimx::optimr(obj$par,obj$fn,obj$gr,control=control,method=optim_method),T)
     if (Opt$message=="iteration limit reached without convergence (10)") {
       obj$par<-obj$env$last.par[which(names(obj$env$last.par) %in% non_r)]
-      Opt <- try(Opt<-optimx::optimr(obj$par,obj$fn,obj$gr,control=control,method=optim_method),T)
+      Opt <- try(optimx::optimr(obj$par,obj$fn,obj$gr,control=control,method=optim_method),T)
     }
   } else if(optim == "parallel"){
     cl <- parallel::makeCluster(cores,type="FORK")
@@ -48,7 +48,7 @@ fit_model<-function(tmb_obj,optim="optimr",
     Opt = try(optimParallel::optimParallel(obj$par,obj$fn,obj$gr,control=control),T)
     if (Opt$message=="iteration limit reached without convergence (10)") {
       obj$par<-obj$env$last.par[which(names(obj$env$last.par) %in% non_r)]
-      Opt <- Opt = try(optimParallel::optimParallel(obj$par,obj$fn,obj$gr,control=control),T)
+      Opt <- try(optimParallel::optimParallel(obj$par,obj$fn,obj$gr,control=control),T)
     }
     parallel::setDefaultCluster(cl=NULL)
     parallel::stopCluster(cl)

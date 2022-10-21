@@ -22,7 +22,7 @@ Type objective_function<Type>::operator() ()
   } else if (model=="SEHBAM"){
     return sehbam(this);
   } else {
-      error("Unknown model.");
+      error("Unknown model");
   }
 
     return 0;
