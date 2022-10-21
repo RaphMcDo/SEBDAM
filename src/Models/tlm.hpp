@@ -126,6 +126,7 @@ Type tlm(objective_function <Type>* obj) {
     }
     REPORT(m);
     REPORT(log_m);
+    ADREPORT(log_m);
 
   } else if (options_vec[1] == 1){
     PARAMETER(log_sigma_m); // proc sd nat mort
@@ -161,6 +162,8 @@ Type tlm(objective_function <Type>* obj) {
     ADREPORT(sigma_m);
     ADREPORT(m);
     REPORT(m);
+    REPORT(log_m);
+    ADREPORT(log_m);
   }
 
   // Biomass Process
@@ -315,10 +318,8 @@ Type tlm(objective_function <Type>* obj) {
   REPORT(R);
   REPORT(log_B);
   REPORT(log_R);
-  REPORT(log_m);
   ADREPORT(log_B);
   ADREPORT(log_R);
-  ADREPORT(log_m);
 
   Type nll = nll_comp.sum();
   return nll;
