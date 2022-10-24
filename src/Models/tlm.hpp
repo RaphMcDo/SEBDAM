@@ -126,7 +126,6 @@ Type tlm(objective_function <Type>* obj) {
     }
     REPORT(m);
     REPORT(log_m);
-    ADREPORT(log_m);
 
   } else if (options_vec[1] == 1){
     PARAMETER(log_sigma_m); // proc sd nat mort
@@ -164,7 +163,6 @@ Type tlm(objective_function <Type>* obj) {
     ADREPORT(sigma_m);
     ADREPORT(m);
     REPORT(m);
-    REPORT(log_m);
     ADREPORT(log_m);
   }
 
