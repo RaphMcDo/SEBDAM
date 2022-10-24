@@ -143,6 +143,8 @@ Type tlm(objective_function <Type>* obj) {
       m(t) = input_m(t);
     }
 
+    log_m = log_input_m;
+
     //Simulate Natural Mortality
     SIMULATE {
       m(0) = Type(0.1);
