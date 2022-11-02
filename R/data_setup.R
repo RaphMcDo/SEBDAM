@@ -270,8 +270,8 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
     temp_data_list$v_i<-mesh$idx$loc-1
 
     if (is.data.frame(growths)){
-      temp_data_list$gI<-as.matrix(growths$g,ncol=1)
-      temp_data_list$gR<-as.matrix(growths$gR,ncol=1)
+      temp_data_list$gI<-t(as.matrix(growths$g,ncol=1))
+      temp_data_list$gR<-t(as.matrix(growths$gR,ncol=1))
       temp_data_list$s_a<-rep(0,temp_data_list$n_s)
     } else if (is.list(growths) & (nrow(growths$gI)==nrow(growths$gR)) & (ncol(growths$gI)>=temp_data_list$n_t) & (ncol(growths$gR)>=temp_data_list$n_t)){
       if (length(s_a)!=temp_data_list$n_s){
