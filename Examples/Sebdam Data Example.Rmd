@@ -144,7 +144,7 @@ str(as.data.frame(sim_catches))
 - all_se: whether to obtain the standard error for all the random effects (not getting them speeds up computational speed dramatically). all_se=TRUE to obtain them, all_se=FALSE otherwise.
 
 ```{r data-setup}
-set_data<-data_setup(data=form_data,growths=spa3_growths,catch=as.data.frame(sim_catches),model="SEBDAM",mesh=knots_mesh$mesh,obs_mort=TRUE,prior=TRUE,prior_pars=c(10,12),mult_qI=FALSE,spat_approach="spde_aniso",knot_obj=knots_mesh$knots,knot_area=pred_grid$area,separate_R_aniso = FALSE,all_se=FALSE)
+set_data<-data_setup(data=form_data,growths=spa3_growths,catch=as.data.frame(sim_catches),model="SEBDAM",mesh=knots_mesh$mesh,obs_mort=T,prior=T,prior_pars=c(10,12),mult_qI=T,spat_approach="spde_aniso",knot_obj=knots_mesh$knots,knot_area=pred_grid$area,separate_R_aniso = FALSE,all_se=FALSE)
 ```
 
 This function returns 4 lists necessary for fitting the SEBDAM model through TMB. These are the following:
@@ -193,7 +193,7 @@ Now that everything is formatted appropriately, the model can be directly fit us
 
 ```{r fit-model}
 #This can take quite some time, ~30 min depending on the computer
-mod_fit<-fit_model(set_data)
+mod_fit<-fit_model(set_data,silent=F)
 ```
 
 This returns all of the raw output from the model fitting process. As there are two functions to get the predicted random effects and the parameter estimates alongside standard errors, we will only look at the most important output for this point to know if the model successfully fit.

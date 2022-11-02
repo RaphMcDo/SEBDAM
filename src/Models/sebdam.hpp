@@ -683,28 +683,32 @@ Type sebdam(objective_function <Type>* obj) {
   }
 
   //Calculate mean natural mortality, and total biomass and recruitment
+  vector <Type> log_mean_m(n_t+1);
   for (int t = 0; t < (n_t+1); t++){
     for (int s = 0; s < (n_s); s++){
       mean_m(t) = mean_m(t) + m(s,t);
     }
     mean_m(t) = mean_m(t) / n_s;
+    log_mean_m(t) = log(mean_m(t));
   }
-  vector <Type> log_mean_m = log(mean_m);
 
   //Divide by 1000 to represent metric tonnes
+  vector <Type> log_totB(n_t+1);
   for (int t = 0; t < (n_t+1); t++){
     for (int s = 0; s < n_s; s++){
       totB(t) = totB(t) + (areaB(s,t)/1000);
     }
+    log_totB(t) = log(totB(t));
   }
-  vector <Type> log_totB = log(totB);
+
+  vector <Type> log_totR(n_t);
 
   for (int t = 0; t < (n_t); t++){
     for (int s = 0; s < n_s; s++){
       totR(t) = totR(t)+(areaR(s,t)/1000);
     }
+    log_totR(t) = log(totR(t));
   }
-  vector <Type> log_totR = log(totR);
 
   // Observation equations
 
