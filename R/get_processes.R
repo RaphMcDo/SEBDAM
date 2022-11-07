@@ -83,7 +83,7 @@ get_processes<-function(return_obj) {
     se_log_totR<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_totR")])
     se_log_totR<-c(se_log_totR,NA)
 
-    log_mean_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_mean_m")])
+    log_mean_m<-unname(return_obj$sdrep$value[which(names(return_obj$sdrep$value)=="log_mean_m")])
     se_log_mean_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_mean_m")])
 
     log_tot_frame<-data.frame(log_totB=log_totB,se_log_totB=se_log_totB,
