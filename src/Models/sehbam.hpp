@@ -100,6 +100,10 @@ Type sehbam(objective_function <Type>* obj) {
   PARAMETER_ARRAY(omega_B);
   PARAMETER_ARRAY(omega_R);
 
+  //Subsetting to only report the predicted field values at the knots
+  matrix <Type> sub_omega_B(n_m,n_t);
+  matrix <Type> sub_omega_R(n_m,n_t);
+
   // Set up matrices for processes of interest
   matrix <Type> log_B(n_s,(n_t+1));
   matrix <Type> B(n_s,(n_t+1));
@@ -320,6 +324,14 @@ Type sehbam(objective_function <Type>* obj) {
 
   }
 
+  //Subsetting the fields:
+  for (int s=0; s<n_s;s++){
+    for (int t=0;s<n_t;t++){
+      sub_omega_B(s,t) = omega_B(v_i(s),t);
+      sub_omega_R(s,t) = omega_R(v_i(s),t);
+    }
+  }
+
   if (options_vec[3] == 0){
     //Derived values
     //For mortality
@@ -338,6 +350,7 @@ Type sehbam(objective_function <Type>* obj) {
   } else if (options_vec[3] == 1){
 
     PARAMETER_ARRAY(omega_m);
+    matrix <Type> sub_omega_m(n_m,n_t);
 
     if (options_vec[5] == 0 || options_vec[5] == 1){
       //Load in parameters
@@ -464,9 +477,14 @@ Type sehbam(objective_function <Type>* obj) {
     }
 
     REPORT(omega_m);
+    for (int s=0; s<n_s;s++){
+      for (int t=0;s<n_t;t++){
+        sub_omega_m(s,t) = omega_m(v_i(s),t);
+      }
+    }
 
     if (options_vec[2] == 1) {
-      ADREPORT(omega_m);
+      ADREPORT(sub_omega_m);
     }
 
   }
@@ -674,9 +692,12 @@ Type sehbam(objective_function <Type>* obj) {
 
   //Calculating predicted biomass and recruitment over area covered by each knots
   //Commercial biomass
+  matrix <Type> areaC(n_s,n_t);
+  areaC.setZero();
   for (int s = 0; s < n_s; s++){
     for (int t = 0; t < (n_t+1); t++){
       areaB(s,t) = B(s,t) * area(s);
+      areaC(s,t) = C(s,t) * area(s);
     }
   }
 
@@ -704,12 +725,36 @@ Type sehbam(objective_function <Type>* obj) {
   }
   vector <Type> log_totB = log(totB);
 
+  vector <Type> totC(n_t);
+  totC.setZero();
+  for (int t = 0; t < (n_t+1); t++){
+    for (int s = 0; s < n_s; s++){
+      totC(t) = totC(t) + (areaC(s,t)/1000);
+    }
+  }
+
+  vector <Type> exp_rates(n_t-1);
+  exp_rates.setZero();
+  for (int t = 0; t < (n_t-1); t++){
+    exp_rates(t) = totC(t+1)/totB(t);
+  }
+
   for (int t = 0; t < (n_t); t++){
     for (int s = 0; s < n_s; s++){
       totR(t) = totR(t)+(areaR(s,t)/1000);
     }
   }
   vector <Type> log_totR = log(totR);
+
+  vector <Type> log_bio_weighted_mean_m(n_t+1);
+  for (int t = 0; t < (n_t+1); t++){
+    Type temp_m = 0;
+    for (int s = 0; s < (n_s); s++){
+      Type temp_prop = areaB(s,t)/(totB(t)*1000);
+      log_bio_weighted_mean_m(t) = temp_m + (m(s,t)*temp_prop);
+    }
+    log_bio_weighted_mean_m(t) = exp(temp_m);
+  }
 
   // Observation equations
 
@@ -947,6 +992,7 @@ Type sehbam(objective_function <Type>* obj) {
   REPORT(totR);
   ADREPORT(totB);
   ADREPORT(totR);
+  REPORT(exp_rates);
 
   REPORT(m);
   REPORT(mean_m);
@@ -958,15 +1004,15 @@ Type sehbam(objective_function <Type>* obj) {
   ADREPORT(log_totB);
   ADREPORT(log_totR);
   ADREPORT(log_mean_m);
+  REPORT(log_bio_weighted_mean_m);
+  ADREPORT(log_bio_weighted_mean_m);
 
   if (options_vec[2] == 1){
     ADREPORT(R);
     ADREPORT(B);
     ADREPORT(m);
-    ADREPORT(omega_R);
-    ADREPORT(omega_B);
-    ADREPORT(areaB);
-    ADREPORT(areaR);
+    ADREPORT(sub_omega_R);
+    ADREPORT(sub_omega_B);
   } else {}
 
   //Report individual negative log-likelihood contributions

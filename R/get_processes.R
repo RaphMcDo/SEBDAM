@@ -20,7 +20,10 @@ get_processes<-function(return_obj) {
     if (return_obj$obj$env$data$options_vec[2]==1) se_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="m")])
     else se_m<-rep(NA,length(m))
 
-    proc_frame<-data.frame(B=B,se_B=se_B,R=R,se_R=se_R,m=m,se_m=se_m)
+    exp_rates<-return_obj$report$exp_rates
+    exp_rates<-c(exp_rates,NA,NA)
+
+    proc_frame<-data.frame(B=B,se_B=se_B,R=R,se_R=se_R,m=m,se_m=se_m,exploitation_rates=exp_rates)
 
     log_B<-return_obj$report$log_B
     se_log_B<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_B")])
@@ -73,7 +76,10 @@ get_processes<-function(return_obj) {
     mean_m<-return_obj$report$mean_m
     se_mean_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="mean_m")])
 
-    tot_frame<-data.frame(totB=totB,se_totB=se_totB,totR=totR,se_totR=se_totR,mean_m=mean_m,se_mean_m=se_mean_m)
+    exp_rates<-return_obj$report$exp_rates
+    exp_rates<-c(exp_rates,NA,NA)
+
+    tot_frame<-data.frame(totB=totB,se_totB=se_totB,totR=totR,se_totR=se_totR,mean_m=mean_m,se_mean_m=se_mean_m,exploitation_rates=exp_rates)
 
     log_totB<-return_obj$report$log_totB
     se_log_totB<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_totB")])
@@ -86,9 +92,14 @@ get_processes<-function(return_obj) {
     log_mean_m<-unname(return_obj$sdrep$value[which(names(return_obj$sdrep$value)=="log_mean_m")])
     se_log_mean_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_mean_m")])
 
+    log_bio_weighted_mean_m<-unname(return_obj$sdrep$value[which(names(return_obj$sdrep$value)=="log_bio_weighted_mean_m")])
+    se_log_bio_weighted_mean_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_bio_weighted_mean_m")])
+
     log_tot_frame<-data.frame(log_totB=log_totB,se_log_totB=se_log_totB,
                               log_totR=log_totR,se_log_totR=se_log_totR,
-                              log_mean_m=log_mean_m,se_log_mean_m=se_log_mean_m)
+                              log_mean_m=log_mean_m,se_log_mean_m=se_log_mean_m,
+                              log_bio_weighted_mean_m=log_bio_weighted_mean_m,
+                              se_log_bio_weighted_mean_m=se_log_bio_weighted_mean_m)
 
     listy<-list(densities=dens_list,totals=tot_frame,log_tot_frame=log_tot_frame)
   }

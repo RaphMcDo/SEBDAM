@@ -188,6 +188,12 @@ Type tlm(objective_function <Type>* obj) {
     REPORT(C);
   }
 
+  vector <Type> exp_rates(NY-1);
+  exp_rates.setZero();
+  for (int t=0; t <(NY-1);t++){
+    exp_rates(t) = C(t+1)/B(t);
+  }
+
   //----------------------------------------------------------------------------
   // Obs eq
   //----------------------------------------------------------------------------
@@ -318,6 +324,7 @@ Type tlm(objective_function <Type>* obj) {
   REPORT(R);
   REPORT(log_B);
   REPORT(log_R);
+  REPORT(exp_rates);
   ADREPORT(log_B);
   ADREPORT(log_R);
 
