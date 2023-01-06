@@ -174,7 +174,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
       }
     }
 
-    if (!all.equal(length(temp_data_list$gI),length(temp_data_list$gR),temp_data_list$n_t,length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tow_IR),length(temp_data_list$n_tows))) {
+    if (!all.equal(length(temp_data_list$g),length(temp_data_list$gR),length(temp_data_list$n_t),length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tows_IR),length(temp_data_list$n_tows))) {
       stop("Growth rates do not match up with number of years, check data")
     }
 
@@ -368,12 +368,11 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
         stop("One of I, IR, or indicators s_i or t_i is not the correct length, check data")
       }
   }
-
-    if (!all.equal(length(temp_data_list$gI),length(temp_data_list$gR),temp_data_list$n_t,length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tow_IR),length(temp_data_list$n_tows))) {
+    if (!all.equal(length(temp_data_list$gI),length(temp_data_list$gR),temp_data_list$n_t,length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tows_IR),length(temp_data_list$n_tows))) {
       stop("Growth rates do not match up with number of years, check data")
     }
 
-    if (!all.equal(length(temp_data_list$area),length(temp_data_list$C[,1]),temp_data_list$n_s,temp_data_list$v_i)) {
+    if (!all.equal(length(temp_data_list$area),length(temp_data_list$C[,1]),temp_data_list$n_s,length(temp_data_list$v_i))) {
       stop("Knot area, catches and number of knots do not all match, check data")
     }
 
