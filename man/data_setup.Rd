@@ -12,10 +12,12 @@ data_setup(
   mesh = NULL,
   bound = NULL,
   obs_mort = FALSE,
+  temp_obs_mort = FALSE,
   prior = FALSE,
   prior_pars = c(10, 12),
   fix_m = 0.1,
   mult_qI = FALSE,
+  s_a = NULL,
   spat_approach = NULL,
   knot_obj = NULL,
   knot_area = NULL,
@@ -37,6 +39,8 @@ data_setup(
 \item{bound}{sf object: used to get triangles for barrier model, if not barrier model leave null}
 
 \item{obs_mort}{boolean: true if using observations of mortality (e.g. clappers), false if fixing mortality}
+
+\item{temp_obs_mort}{boolean: true if using a temporal random walk for natural mortality (e.g., clappers), false if fixing or using spatial}
 
 \item{prior}{boolean: true if using a prior distribution to inform q_I, false to freely estimate}
 

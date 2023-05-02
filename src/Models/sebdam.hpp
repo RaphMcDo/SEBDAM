@@ -20,10 +20,11 @@ Type sebdam(objective_function <Type>* obj) {
   //  1 = Use prior on catchabilities
   //Slot 2: Choice of obtaining computationally expensive standard errors
   // 0 (default) = Obtain standard errors only for parameters and overall processes
-  // 1 = Obtain all standard errors
+  // 1 = Obtain standard errors for knot-specific densities
   //Slot 3: Choice of mortality approach, given that most fisheries don't have any observations for mortality
   // 0 (default) = Fix mortality to user-provided value
   // 1 = use spatial approach
+  // 2 = Temporal random walk to natural mortality
   //Slot 4: choice of single or multiple commercial size catchabilities
   // 0 (default) = Single commercial size catchability
   // 1 = different catchability at each knots
@@ -343,6 +344,40 @@ Type sebdam(objective_function <Type>* obj) {
       m(s,n_t) = exp(log_m(s,n_t));
     }
 
+  } else if (options_vec[3] == 2){
+
+    PARAMETER(log_sigma_m);
+    Type sigma_m = exp(log_sigma_m);
+    PARAMETER_VECTOR(log_temporal_m);
+    vector<Type>temporal_m = exp(log_temporal_m);
+
+    nll_comp(2) -= dnorm(log_temporal_m(0),log_m0-(sqr(sigma_m)/Type(2.0)),sigma_m,true);
+    for (int t = 1; t < n_t; t++){
+      nll_comp(2) -= dnorm(log_temporal_m(t),log_temporal_m(t-1)-(sqr(sigma_m)/Type(2.0)),sigma_m,true);
+    }
+
+    SIMULATE{
+      log_temporal_m(0) = log_m0 + rnorm(Type(0.0),sigma_m);
+      temporal_m(0) = exp(log_temporal_m(0));
+      for (int t = 1; t < n_t; t++){
+        log_temporal_m(t) = log_temporal_m(t-1)+rnorm(Type(0.0),sigma_m);
+        temporal_m(t) = exp(log_temporal_m(t));
+      }
+      REPORT(log_temporal_m);
+      REPORT(temporal_m);
+    }
+
+    //So as to not change the other equations
+    for (int s = 0; s < n_s; s++){
+      for (int t = 0; t < (n_t); t++){
+        log_m(s,t) = log_temporal_m(t);
+        m(s,t) = exp(log_m(s,t));
+      }
+      //Project 1 year ahead
+      log_m(s,n_t) = log_temporal_m(n_t-1);
+      m(s,n_t) = exp(log_m(s,n_t));
+    }
+
   } else if (options_vec[3] == 1){
 
     PARAMETER_ARRAY(omega_m);
@@ -479,10 +514,6 @@ Type sebdam(objective_function <Type>* obj) {
       for (int t=0;s<n_t;t++){
         sub_omega_m(s,t) = omega_m(v_i(s),t);
       }
-    }
-
-    if (options_vec[2] == 1) {
-      ADREPORT(sub_omega_m);
     }
 
   }
@@ -865,7 +896,7 @@ Type sebdam(objective_function <Type>* obj) {
   }
 
 
-  if (options_vec[3] == 1) {
+  if (options_vec[3] == 1 || options_vec[3] == 2) {
     DATA_VECTOR(L); //number of clappers (dim n_i)
     DATA_VECTOR(n_bin); //number of shell caught in tow i (dim n_i)
 
@@ -944,8 +975,6 @@ Type sebdam(objective_function <Type>* obj) {
     ADREPORT(R);
     ADREPORT(B);
     ADREPORT(m);
-    ADREPORT(sub_omega_R);
-    ADREPORT(sub_omega_B);
   } else {}
 
   //Report individual negative log-likelihood contributions

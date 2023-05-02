@@ -7,6 +7,7 @@
 #' @param mesh INLA mesh: used for spatial approach, if non-spatial leave null, obtained from setup_mesh function
 #' @param bound sf object: used to get triangles for barrier model, if not barrier model leave null
 #' @param obs_mort boolean: true if using observations of mortality (e.g. clappers), false if fixing mortality
+#' @param temp_obs_mort boolean: true if using a temporal random walk for natural mortality (e.g., clappers), false if fixing or using spatial
 #' @param prior boolean: true if using a prior distribution to inform q_I, false to freely estimate
 #' @param prior_pars numeric: parameters for beta distribution used as a prior, default set to 10 and 12
 #' @param fix_m double: value used for fixing mortality when not using any observations, ignore if using observations
@@ -22,7 +23,7 @@
 #'
 #' @examples
 data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL, bound=NULL,
-                     obs_mort=FALSE, prior=FALSE, prior_pars=c(10,12), fix_m=0.1,
+                     obs_mort=FALSE, temp_obs_mort=FALSE, prior=FALSE, prior_pars=c(10,12), fix_m=0.1,
                      mult_qI=FALSE, s_a=NULL, spat_approach=NULL, knot_obj=NULL,
                      knot_area=NULL,separate_R_aniso=T,all_se=F) {
 
@@ -174,7 +175,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
       }
     }
 
-    if (!all.equal(length(temp_data_list$gI),length(temp_data_list$gR),temp_data_list$n_t,length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tow_IR),length(temp_data_list$n_tows))) {
+    if (!all.equal(length(temp_data_list$g),length(temp_data_list$gR),temp_data_list$n_t,length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tow_IR),length(temp_data_list$n_tows))) {
       stop("Growth rates do not match up with number of years, check data")
     }
 
@@ -222,6 +223,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
     }
     if (all_se == T) temp_data_list$options_vec[3]<-1
     if (obs_mort == TRUE) temp_data_list$options_vec[4]<-1
+    if (temp_obs_mort == TRUE) temp_data_list$options_vec[4]<-2
     if (mult_qI == TRUE) temp_data_list$options_vec[5]<-1
     if (spat_approach == "spde_aniso") {
       temp_data_list$options_vec[6]<-1
@@ -353,7 +355,11 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
       temp_data_list$L<-temp_L
       temp_data_list$n_bin<-temp_bin
       temp_par_list$log_S<--1
-    } else if (obs_mort == FALSE) temp_map$log_m0<-as.factor(NA)
+    } else if (temp_obs_mort == TRUE) {
+      temp_par_list$log_sigma_m<--1
+      temp_par_list$log_temporal_m<-rep(log_m0,n_t)
+      temp_random<-c(temp_random,"log_temporal_m")
+    } else temp_map$log_m0<-as.factor(NA)
     if (spat_approach == "spde_aniso" & separate_R_aniso==FALSE) temp_map$log_H_input_R<-as.factor(c(NA,NA))
 
     tmb_obj<-list(data=temp_data_list,par=temp_par_list,random=temp_random,map=temp_map)
@@ -373,7 +379,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
       stop("Growth rates do not match up with number of years, check data")
     }
 
-    if (!all.equal(length(temp_data_list$area),length(temp_data_list$C[,1]),temp_data_list$n_s,temp_data_list$v_i)) {
+    if (!all.equal(length(temp_data_list$area),length(temp_data_list$C[,1]),temp_data_list$n_s,length(unique(temp_data_list$v_i)))) {
       stop("Knot area, catches and number of knots do not all match, check data")
     }
 
