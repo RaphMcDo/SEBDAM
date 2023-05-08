@@ -35,6 +35,9 @@ Type sebdam(objective_function <Type>* obj) {
   //Slot 6: Separate anisotropy for recruitment or not
   //0 (default): same as for biomass
   //1: separate anisotropy parameters
+  //Slot 7: Separate anisotropy for recruitment or not
+  //0 (default): Straight mean of natural mortality
+  //1: Weighted (by biomass at each knot) mean of natural mortality
 
   //Data
   DATA_VECTOR(logI); //commercial biomass survey index by tow (dim n_i)
@@ -734,15 +737,8 @@ Type sebdam(objective_function <Type>* obj) {
     }
   }
 
+
   //Calculate mean natural mortality, and total biomass and recruitment
-  vector <Type> log_mean_m(n_t+1);
-  for (int t = 0; t < (n_t+1); t++){
-    for (int s = 0; s < (n_s); s++){
-      mean_m(t) = mean_m(t) + m(s,t);
-    }
-    mean_m(t) = mean_m(t) / n_s;
-    log_mean_m(t) = log(mean_m(t));
-  }
 
   //Divide by 1000 to represent metric tonnes
   vector <Type> log_totB(n_t+1);
@@ -751,6 +747,25 @@ Type sebdam(objective_function <Type>* obj) {
       totB(t) = totB(t) + (areaB(s,t)/1000);
     }
     log_totB(t) = log(totB(t));
+  }
+
+  vector <Type> log_mean_m(n_t+1);
+  if (options_vec(7) == 0) {
+    for (int t = 0; t < (n_t+1); t++){
+      for (int s = 0; s < (n_s); s++){
+        mean_m(t) = mean_m(t) + m(s,t);
+      }
+      mean_m(t) = mean_m(t) / n_s;
+      log_mean_m(t) = log(mean_m(t));
+    }
+  } else if (options_vec(7) == 1) {
+    for (int t = 0; t < (n_t+1); t++){
+      for (int s = 0; s < (n_s); s++){
+        Type prop_B_s = (areaB(s,t)/1000)/totB(t);
+        mean_m(t) = mean_m(t) + m(s,t)*prop_B_s;
+      }
+      log_mean_m(t) = log(mean_m(t));
+    }
   }
 
   vector <Type> totC(n_t);

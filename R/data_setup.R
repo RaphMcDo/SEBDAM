@@ -25,7 +25,7 @@
 data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL, bound=NULL,
                      obs_mort=FALSE, temp_obs_mort=FALSE, prior=FALSE, prior_pars=c(10,12), fix_m=0.1,
                      mult_qI=FALSE, s_a=NULL, spat_approach=NULL, knot_obj=NULL,
-                     knot_area=NULL,separate_R_aniso=T,all_se=F) {
+                     knot_area=NULL,separate_R_aniso=T,all_se=F,weighted_mean_m=F) {
 
   #Data tables do not always work the same way as data.frames, so ensure they are data.frames
   if (is.null(data) | is.null(growths)) {
@@ -96,7 +96,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
     temp_data_list$gR<-growths$gR
 
     temp_tows<-c()
-    for (i in unique(data$Year)){
+    for (i in unique(data$Year[order(data$Year)])){
       temp<-subset(data,Year==i)
       temp_tows<-c(temp_tows,length(temp$Year))
     }
@@ -105,7 +105,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
     #Positive Tows:
     non_zeroes_I<-c()
     non_zeroes_IR<-c()
-    for(i in unique(data$Year)) {
+    for(i in unique(data$Year[order(data$Year)])) {
       non_zeroes_I[i] <- length(which(subset(data,Year==(i))$I!=0))
       non_zeroes_IR[i] <- length(which(subset(data,Year==(i))$IR!=0))
     }
@@ -113,6 +113,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
     temp_data_list$pos_tows_IR<-non_zeroes_IR
 
     temp_data_list$t_i<-(data$Year-min(data$Year))
+    temp_data_list$n_t<-length(unique(data$Year))
 
     temp_data_list$plug_exploit<-0.1
 
@@ -151,8 +152,6 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
       temp_L[which(is.na(temp_bin))]<-NA
       temp_data_list$L<-temp_L
       temp_data_list$n_bin<-temp_bin
-      temp_data_list$n_bin<-temp_bin
-      temp_data_list$L<-temp_L
 
       temp_par_list$log_sigma_m<--1
       temp_par_list$log_S<--1
@@ -175,7 +174,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
       }
     }
 
-    if (!all.equal(length(temp_data_list$g),length(temp_data_list$gR),temp_data_list$n_t,length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tow_IR),length(temp_data_list$n_tows))) {
+    if (!all.equal(length(temp_data_list$g),length(temp_data_list$gR),temp_data_list$n_t,length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tows_IR),length(temp_data_list$n_tows))) {
       stop("Growth rates do not match up with number of years, check data")
     }
 
@@ -216,7 +215,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
 
     temp_data_list$model<-"SEBDAM"
 
-    temp_data_list$options_vec<-c(0,0,0,0,0,0,0)
+    temp_data_list$options_vec<-c(0,0,0,0,0,0,0,0)
     if (prior == TRUE) {
       temp_data_list$options_vec[2]<-1
       temp_data_list$prior_pars<-prior_pars
@@ -230,6 +229,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
       if (separate_R_aniso==T) temp_data_list$options_vec[7]<-1
     }
     else if (spat_approach == "barrier") temp_data_list$options_vec[6]<-2
+    if (weighted_mean_m == TRUE) temp_data_list$options_vec[8]<-1
 
     #For adult/commercial size animals, can be directly used
     temp_data_list$logI<-data$I
@@ -246,7 +246,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
     temp_data_list$C<-as.matrix(catch/knot_area$area)
 
     temp_tows<-c()
-    for (i in unique(data$Year)){
+    for (i in unique(data$Year[order(data$Year)])){
       temp<-subset(data,Year==i)
       temp_tows<-c(temp_tows,length(temp$Year))
     }
@@ -255,7 +255,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
     #Positive Tows:
     non_zeroes_I<-c()
     non_zeroes_IR<-c()
-    for(i in unique(data$Year)) {
+    for(i in unique(data$Year[order(data$Year)])) {
       non_zeroes_I[i] <- length(which(subset(data,Year==(i))$I!=0))
       non_zeroes_IR[i] <- length(which(subset(data,Year==(i))$IR!=0))
     }
@@ -375,7 +375,7 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
       }
   }
 
-    if (!all.equal(length(temp_data_list$gI),length(temp_data_list$gR),temp_data_list$n_t,length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tow_IR),length(temp_data_list$n_tows))) {
+    if (!all.equal(length(temp_data_list$gI),length(temp_data_list$gR),temp_data_list$n_t,length(temp_data_list$pos_tows_I),length(temp_data_list$pos_tows_IR),length(temp_data_list$n_tows))) {
       stop("Growth rates do not match up with number of years, check data")
     }
 
