@@ -745,10 +745,12 @@ Type sehbam(objective_function <Type>* obj) {
     }
   } else if (options_vec(7) == 1) {
     for (int t = 0; t < (n_t+1); t++){
+      Type temp_m = 0;
       for (int s = 0; s < (n_s); s++){
         Type prop_B_s = (areaB(s,t)/1000)/totB(t);
-        mean_m(t) = mean_m(t) + m(s,t)*prop_B_s;
+        temp_m = temp_m + m(s,t)*prop_B_s;
       }
+      mean_m(t) = temp_m;
       log_mean_m(t) = log(mean_m(t));
     }
   }
@@ -774,15 +776,15 @@ Type sehbam(objective_function <Type>* obj) {
   }
   vector <Type> log_totR = log(totR);
 
-  vector <Type> log_bio_weighted_mean_m(n_t+1);
-  for (int t = 0; t < (n_t+1); t++){
-    Type temp_m = 0;
-    for (int s = 0; s < (n_s); s++){
-      Type temp_prop = areaB(s,t)/(totB(t)*1000);
-      log_bio_weighted_mean_m(t) = temp_m + (m(s,t)*temp_prop);
-    }
-    log_bio_weighted_mean_m(t) = exp(temp_m);
-  }
+  // vector <Type> log_bio_weighted_mean_m(n_t+1);
+  // for (int t = 0; t < (n_t+1); t++){
+  //   Type temp_m = 0;
+  //   for (int s = 0; s < (n_s); s++){
+  //     Type temp_prop = areaB(s,t)/(totB(t)*1000);
+  //     temp_m = temp_m + (m(s,t)*temp_prop);
+  //   }
+  //   log_bio_weighted_mean_m(t) = log(temp_m);
+  // }
 
   // Observation equations
 
@@ -1032,8 +1034,8 @@ Type sehbam(objective_function <Type>* obj) {
   ADREPORT(log_totB);
   ADREPORT(log_totR);
   ADREPORT(log_mean_m);
-  REPORT(log_bio_weighted_mean_m);
-  ADREPORT(log_bio_weighted_mean_m);
+  // REPORT(log_bio_weighted_mean_m);
+  // ADREPORT(log_bio_weighted_mean_m);
 
   if (options_vec[2] == 1){
     ADREPORT(R);
