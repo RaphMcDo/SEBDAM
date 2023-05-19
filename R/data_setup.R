@@ -271,7 +271,11 @@ data_setup<-function(data=NULL, growths=NULL, catch=NULL, model=NULL, mesh=NULL,
     temp_data_list$t_i<-(data$Year-min(data$Year))
     temp_data_list$v_i<-mesh$idx$loc-1
 
-    if (is.data.frame(growths)){
+    if (is.data.frame(growths) & ncol(growths)==2){
+      temp_data_list$gI<-as.matrix(growths$g,ncol=1)
+      temp_data_list$gR<-as.matrix(growths$gR,ncol=1)
+      temp_data_list$s_a<-rep(0,temp_data_list$n_s)
+    } else if (is.data.frame(growths) & nrow(growths)==2) {
       temp_data_list$gI<-t(as.matrix(growths$g,ncol=1))
       temp_data_list$gR<-t(as.matrix(growths$gR,ncol=1))
       temp_data_list$s_a<-rep(0,temp_data_list$n_s)

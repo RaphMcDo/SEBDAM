@@ -35,7 +35,7 @@ Type sebdam(objective_function <Type>* obj) {
   //Slot 6: Separate anisotropy for recruitment or not
   //0 (default): same as for biomass
   //1: separate anisotropy parameters
-  //Slot 7: Separate anisotropy for recruitment or not
+  //Slot 7: Weighted nat mortality or not
   //0 (default): Straight mean of natural mortality
   //1: Weighted (by biomass at each knot) mean of natural mortality
 
@@ -94,10 +94,6 @@ Type sebdam(objective_function <Type>* obj) {
   //Spatial Random Effects
   PARAMETER_ARRAY(omega_B);
   PARAMETER_ARRAY(omega_R);
-
-  //Subsetting to only report the predicted field values at the knots
-  matrix <Type> sub_omega_B(n_m,n_t);
-  matrix <Type> sub_omega_R(n_m,n_t);
 
   // Set up matrices for processes of interest
   matrix <Type> log_B(n_s,(n_t+1));
@@ -324,14 +320,6 @@ Type sebdam(objective_function <Type>* obj) {
 
   }
 
-  //Subsetting the fields:
-  for (int s=0; s<n_s;s++){
-    for (int t=0;s<n_t;t++){
-      sub_omega_B(s,t) = omega_B(v_i(s),t);
-      sub_omega_R(s,t) = omega_R(v_i(s),t);
-    }
-  }
-
   if (options_vec[3] == 0){
     //Derived values
     //For mortality
@@ -384,7 +372,6 @@ Type sebdam(objective_function <Type>* obj) {
   } else if (options_vec[3] == 1){
 
     PARAMETER_ARRAY(omega_m);
-    matrix <Type> sub_omega_m(n_m,n_t);
 
     if (options_vec[5] == 0 || options_vec[5] == 1){
       //Load in parameters
@@ -513,11 +500,6 @@ Type sebdam(objective_function <Type>* obj) {
     }
 
     REPORT(omega_m);
-    for (int s=0; s<n_s;s++){
-      for (int t=0;s<n_t;t++){
-        sub_omega_m(s,t) = omega_m(v_i(s),t);
-      }
-    }
 
   }
 
@@ -724,7 +706,7 @@ Type sebdam(objective_function <Type>* obj) {
   matrix <Type> areaC(n_s,n_t);
   areaC.setZero();
   for (int s = 0; s < n_s; s++){
-    for (int t = 0; t < (n_t+1); t++){
+    for (int t = 0; t < (n_t); t++){
       areaB(s,t) = B(s,t) * area(s);
       areaC(s,t) = C(s,t) * area(s);
     }
@@ -770,7 +752,7 @@ Type sebdam(objective_function <Type>* obj) {
 
   vector <Type> totC(n_t);
   totC.setZero();
-  for (int t = 0; t < (n_t+1); t++){
+  for (int t = 0; t < (n_t); t++){
     for (int s = 0; s < n_s; s++){
       totC(t) = totC(t) + (areaC(s,t)/1000);
     }
