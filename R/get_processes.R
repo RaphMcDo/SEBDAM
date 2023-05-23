@@ -92,14 +92,9 @@ get_processes<-function(return_obj) {
     log_mean_m<-unname(return_obj$sdrep$value[which(names(return_obj$sdrep$value)=="log_mean_m")])
     se_log_mean_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_mean_m")])
 
-    log_bio_weighted_mean_m<-unname(return_obj$sdrep$value[which(names(return_obj$sdrep$value)=="log_bio_weighted_mean_m")])
-    se_log_bio_weighted_mean_m<-unname(return_obj$sdrep$sd[which(names(return_obj$sdrep$value)=="log_bio_weighted_mean_m")])
-
     log_tot_frame<-data.frame(log_totB=log_totB,se_log_totB=se_log_totB,
                               log_totR=log_totR,se_log_totR=se_log_totR,
-                              log_mean_m=log_mean_m,se_log_mean_m=se_log_mean_m,
-                              log_bio_weighted_mean_m=log_bio_weighted_mean_m,
-                              se_log_bio_weighted_mean_m=se_log_bio_weighted_mean_m)
+                              log_mean_m=log_mean_m,se_log_mean_m=se_log_mean_m)
 
     listy<-list(densities=dens_list,totals=tot_frame,log_tot_frame=log_tot_frame)
   }
