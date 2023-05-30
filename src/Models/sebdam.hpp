@@ -702,20 +702,21 @@ Type sebdam(objective_function <Type>* obj) {
 
 
   //Calculating predicted biomass and recruitment over area covered by each knots
-  //Commercial biomass and catches
-  matrix <Type> areaC(n_s,n_t);
-  areaC.setZero();
-  for (int s = 0; s < n_s; s++){
-    for (int t = 0; t < (n_t); t++){
+  //Commercial biomass 
+   for (int s = 0; s < n_s; s++){
+    for (int t = 0; t < (n_t+1); t++){
       areaB(s,t) = B(s,t) * area(s);
-      areaC(s,t) = C(s,t) * area(s);
     }
   }
 
-  //Recruits
+  //Recruits and catches
+  matrix <Type> areaC(n_s,n_t);
+  areaC.setZero();
+  
   for (int s = 0; s < n_s; s++){
     for (int t = 0; t < (n_t); t++){
       areaR(s,t) = R(s,t) * area(s);
+      areaC(s,t) = C(s,t) * area(s);
     }
   }
 
